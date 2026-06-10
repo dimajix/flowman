@@ -44,7 +44,7 @@ object Assembler {
             _children += child
         }
         protected def children(): Seq[Assembler] = {
-            _children.map(_.build())
+            _children.map(_.build()).toSeq
         }
     }
 
@@ -80,9 +80,9 @@ object Assembler {
 
         override def build(): Assembler = {
             if (name.isEmpty)
-                new ColumnAssembler(_path, _keep, _drop)
+                new ColumnAssembler(_path, _keep.toSeq, _drop.toSeq)
             else
-                new NestAssembler(name, _path, _keep, _drop)
+                new NestAssembler(name, _path, _keep.toSeq, _drop.toSeq)
         }
     }
 
@@ -123,7 +123,7 @@ object Assembler {
         }
 
         override def build(): Assembler = {
-            new FlattenAssembler(_path, _keep, _drop, _prefix, _naming)
+            new FlattenAssembler(_path, _keep.toSeq, _drop.toSeq, _prefix, _naming)
         }
     }
 
@@ -148,7 +148,7 @@ object Assembler {
         }
 
         override def build() : Assembler = {
-            new LiftAssembler(_path, _columns)
+            new LiftAssembler(_path, _columns.toSeq)
         }
     }
 
@@ -232,7 +232,7 @@ object Assembler {
         }
 
         override def build(): Assembler = {
-            new RenameAssembler(_path, _columns)
+            new RenameAssembler(_path, _columns.toSeq)
         }
     }
 

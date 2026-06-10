@@ -81,7 +81,7 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         (sourceRelationTemplate.instantiate _).expects(context,None).returns(sourceRelation)
         (sourceRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/src"))
         (sourceRelation.context _).expects().returns(context)
-        (sourceRelation.link _).expects(*).returns(Unit)
+        (sourceRelation.link _).expects(*).returns(())
         (sourceRelation.describe _).expects(*,Map("pcol"-> SingleValue("part1"))).returns(StructType(Seq()))
 
         val graph = Graph.ofProject(session, project, Phase.BUILD)

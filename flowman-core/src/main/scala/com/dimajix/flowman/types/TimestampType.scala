@@ -37,8 +37,8 @@ case object TimestampType extends FieldType {
       */
     override def parse(value:String, granularity:Option[String]=None) : UtcTimestamp = {
         if (granularity.nonEmpty) {
-            val msecs = UtcTimestamp.toEpochSeconds(value) * 1000l
-            val step = Duration.parse(granularity.get).getSeconds * 1000l
+            val msecs = UtcTimestamp.toEpochSeconds(value) * 1000L
+            val step = Duration.parse(granularity.get).getSeconds * 1000L
             new UtcTimestamp(roundDown(msecs, step))
         }
         else {
@@ -77,7 +77,7 @@ case object TimestampType extends FieldType {
                 else {
                     startDate.until(endDate)
                 }
-                result.map(x => new UtcTimestamp(x * 1000l))
+                result.map(x => new UtcTimestamp(x * 1000L))
             }
         }
     }

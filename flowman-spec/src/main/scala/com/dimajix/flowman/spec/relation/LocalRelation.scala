@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.relation
 
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
+import scala.collection.compat._
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Column
@@ -169,7 +170,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
         requireAllPartitionKeys(partition)
 
-        val outputPath  = collector.resolve(partition.mapValues(_.value))
+        val outputPath  = collector.resolve(partition.view.mapValues(_.value).toMap)
         val outputFile = Paths.get(outputPath.uri)
 
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")

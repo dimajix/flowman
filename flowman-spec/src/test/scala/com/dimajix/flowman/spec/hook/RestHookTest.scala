@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.hook
 
 import java.net.URL
 
+import scala.collection.compat._
 import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
@@ -106,7 +107,7 @@ class RestHookTest extends AnyFlatSpec with Matchers with LocalSparkSession with
         val hook = spec.instantiate(context)
         hook shouldBe a[RestHook]
         val restHook = hook.asInstanceOf[RestHook]
-        restHook.condition.mapValues(_.map(_.regex)) should be (Map("phase" -> Seq("BUILD", "VERIFY"), "category" -> Seq("job")))
+        restHook.condition.view.mapValues(_.map(_.regex)).toMap should be (Map("phase" -> Seq("BUILD", "VERIFY"), "category" -> Seq("job")))
         restHook.url should be ("http://${lala}")
 
         session.shutdown()

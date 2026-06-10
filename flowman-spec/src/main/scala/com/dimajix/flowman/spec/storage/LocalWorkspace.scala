@@ -124,7 +124,7 @@ case class LocalWorkspace(override val root:File) extends AbstractWorkspace {
 
     private def writeWorkspaceFile() : Unit = {
         val spec = new LocalWorkspaceSpec
-        spec.parcels = _parcels.map(_.asInstanceOf[ToSpec[ParcelSpec]].spec)
+        spec.parcels = _parcels.map(_.asInstanceOf[ToSpec[ParcelSpec]].spec).toSeq
 
         val file = root / ".flowman-workspace.yaml"
         val out = file.create(overwrite = true)

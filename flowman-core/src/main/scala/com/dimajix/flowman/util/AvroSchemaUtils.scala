@@ -102,7 +102,7 @@ object AvroSchemaUtils {
             case NullType => ASchema.create(NULL)
             case StringType => ASchema.create(STRING)
             case StructType(fields) => {
-                val nestedNs = ns + "." + name
+                val nestedNs = if (ns == "") name else ns + "." + name;
                 val record = ASchema.createRecord(name, null, nestedNs, false)
                 record.setFields(fields.map(f => toAvro(f, nestedNs)).asJava)
                 record
@@ -151,7 +151,7 @@ object AvroSchemaUtils {
         if (schema.getType != RECORD)
             throw new UnsupportedOperationException("Unexpected Avro top level type")
 
-        schema.getFields.asScala.map(f => AvroSchemaUtils.fromAvro(f, forceNullable))
+        schema.getFields.asScala.toSeq.map(f => AvroSchemaUtils.fromAvro(f, forceNullable))
     }
 
     def fromAvro(field: AField, forceNullable:Boolean) : Field = {
@@ -185,7 +185,7 @@ object AvroSchemaUtils {
             case ENUM => (StringType, forceNullable)
 
             case RECORD =>
-                val fields = schema.getFields.asScala.map { f =>
+                val fields = schema.getFields.asScala.toSeq.map { f =>
                     val (schemaType,nullable) = fromAvroType(f.schema(), forceNullable)
                     Field(f.name, schemaType, nullable, Option(f.doc()))
                 }

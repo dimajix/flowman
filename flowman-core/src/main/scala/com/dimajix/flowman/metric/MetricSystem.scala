@@ -103,13 +103,13 @@ class MetricSystem extends MetricCatalog {
       * Returns all currently registered MetricBundles
       * @return
       */
-    override def bundles : Seq[MetricBundle] = metricBundles.toSeq
+    override def bundles : Seq[MetricBundle] = metricBundles.toSeq.toSeq
 
     /**
      * returns all metrics
      * @return
      */
-    override def metrics : Seq[Metric] = metricBundles.toSeq.flatMap(_.metrics)
+    override def metrics : Seq[Metric] = metricBundles.toSeq.toSeq.flatMap(_.metrics)
 
     /**
       * Adds a new MetricBoard to the system. The board is also added to all previously registered sinks.
@@ -174,7 +174,7 @@ class MetricSystem extends MetricCatalog {
       * Returns a list of all registered metric sinks
       * @return
       */
-    def sinks : Seq[MetricSink] = metricSinks.toSeq
+    def sinks : Seq[MetricSink] = metricSinks.toSeq.toSeq
 
     /**
       * Resets all metric bundles in this registry
@@ -212,7 +212,7 @@ class MetricSystem extends MetricCatalog {
             bundle.metrics.filter(m => matchMetric(m, prunedQuery))
         }
 
-        metricBundles.toSeq
+        metricBundles.toSeq.toSeq
             .filter(b => matchBundle(b))
             .flatMap(queryBundle)
     }
@@ -232,7 +232,7 @@ class MetricSystem extends MetricCatalog {
                 selector.labels.forall(kv => labels.get(kv._1).exists(v => kv._2.unapplySeq(v).nonEmpty))
         }
 
-        metricBundles.toSeq
+        metricBundles.toSeq.toSeq
             .filter(b => matchBundle(b))
     }
 }

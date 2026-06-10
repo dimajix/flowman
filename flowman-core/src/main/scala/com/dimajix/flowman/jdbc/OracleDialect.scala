@@ -197,7 +197,7 @@ class OracleCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         }
 
         if (idxcols.nonEmpty)
-            Some(PrimaryKey(idxcols))
+            Some(PrimaryKey(idxcols.toSeq))
         else
             None
     }
@@ -224,7 +224,7 @@ class OracleCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
             idxcols.append((name,column,unique))
         }
 
-        idxcols
+        idxcols.toSeq
             .groupBy(_._1).map { case(name,cols) =>
             TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
         }.toSeq

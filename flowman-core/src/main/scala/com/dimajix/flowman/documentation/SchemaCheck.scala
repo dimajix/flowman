@@ -17,15 +17,12 @@
 package com.dimajix.flowman.documentation
 
 import java.util.Locale
-
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{Column, DataFrame, SparkShim}
 import org.apache.spark.sql.functions.coalesce
 import org.apache.spark.sql.functions.expr
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.LongType
-
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.MappingIdentifier
@@ -203,8 +200,8 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
                         Some(CheckResult(Some(s.reference), status, Some(description)))
                     case _ if df1.columns.length == 2 =>
                         val cols = plan.output
-                        val boolCol = coalesce(new Column(cols(0)).cast(BooleanType), lit(false)).as("bool_col")
-                        val countCol = new Column(cols(1)).cast(LongType).as("count_col")
+                        val boolCol = coalesce(SparkShim.column(cols(0)).cast(BooleanType), lit(false)).as("bool_col")
+                        val countCol = SparkShim.column(cols(1)).cast(LongType).as("count_col")
                         val df2 = df1.select(boolCol, countCol)
                         val result = df2.groupBy(df2("bool_col")).sum("count_col")
                         evaluateResult(result, s)

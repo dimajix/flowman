@@ -23,7 +23,7 @@ final case class WallTimeMetric(override val name:String, override val labels:Ma
     private var startTime = now()
     private var endTime:Option[Long] = None
 
-    override def value: Double = endTime.getOrElse(now()) - startTime
+    override def value: Double = (endTime.getOrElse(now()) - startTime).toDouble
 
     /**
       * Resets this metric

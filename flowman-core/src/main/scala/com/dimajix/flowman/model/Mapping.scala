@@ -464,7 +464,9 @@ abstract class BaseMapping extends AbstractInstance with Mapping with Logging {
                     attributes.get(col.name) match {
                         case Some(att) =>
                             // Use an IdentityHashset for deduplication
-                            IdentityHashSet(lookupSourceColumns(att):_*).foreach(src => linker.connect(src, col))
+                            val set = new IdentityHashSet[Column]()
+                            lookupSourceColumns(att).foreach(set.add)
+                            set.foreach(src => linker.connect(src, col))
                         case None =>
                         // Should not happen
                     }

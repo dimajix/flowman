@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.relation
 import java.io.FileNotFoundException
 import java.nio.file.FileAlreadyExistsException
 
+import com.dimajix.common.ParallelCompat._
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column

@@ -94,7 +94,7 @@ object Session {
             require(session != null)
             requireNoParent()
             createSparkSession = _ => session
-            stopSparkSession = _ => Unit
+            stopSparkSession = _ => ()
             this
         }
         def withSparkName(name:String) : Builder = {
@@ -271,7 +271,7 @@ object Session {
                 project,
                 store,
                 parent.map(p => (_:SparkSession.Builder) => p.spark.newSession()).getOrElse(createSparkSession),
-                if (parent.nonEmpty) ((_:SparkSession) => Unit) else stopSparkSession,
+                if (parent.nonEmpty) ((_:SparkSession) => ()) else stopSparkSession,
                 parent.map(_._sparkMaster).getOrElse(sparkMaster),
                 parent.map(_._sparkName).getOrElse(sparkName),
                 parent.map(_._config).getOrElse(Map()) ++ config,

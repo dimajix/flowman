@@ -24,7 +24,6 @@ import org.apache.spark.sql.catalyst.FunctionIdentifier
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder
 import org.apache.spark.sql.catalyst.expressions.ExpressionInfo
 import org.apache.spark.util.LongAccumulator
-
 import com.dimajix.spark.sql.catalyst.plans.logical.CountRecords
 import com.dimajix.spark.sql.expressions.CreateNullableStruct
 
@@ -32,7 +31,7 @@ import com.dimajix.spark.sql.expressions.CreateNullableStruct
 class functions
 object functions {
     @scala.annotation.varargs
-    def nullable_struct(cols: Column*): Column = new Column(CreateNullableStruct(cols.map(_.expr)))
+    def nullable_struct(cols: Column*): Column = SparkShim.column(CreateNullableStruct(cols.map(SparkShim.expr)))
 
     def count_records(df:DataFrame, counter:LongAccumulator) : DataFrame =
         DataFrameBuilder.ofRows(df.sparkSession, CountRecords(df.queryExecution.logical, counter))
@@ -43,28 +42,28 @@ object functions {
         (
             FunctionIdentifier(name),
             new ExpressionInfo(classOf[functions].getCanonicalName, name),
-            exprs => fn(new Column(exprs(0))).expr
+            exprs => SparkShim.expr(fn(SparkShim.column(exprs(0))))
         )
     }
     def wrap(fn:(Column, Column) => Column, name:String) : FunctionDescription = {
         (
             FunctionIdentifier(name),
             new ExpressionInfo(classOf[functions].getCanonicalName, name),
-            exprs => fn(new Column(exprs(0)), new Column(exprs(1))).expr
+            exprs => SparkShim.expr(fn(SparkShim.column(exprs(0)), SparkShim.column(exprs(1))))
         )
     }
     def wrap(fn:(Column, Column, Column) => Column, name:String) : FunctionDescription = {
         (
             FunctionIdentifier(name),
             new ExpressionInfo(classOf[functions].getCanonicalName, name),
-            exprs => fn(new Column(exprs(0)), new Column(exprs(1)), new Column(exprs(2))).expr
+            exprs => SparkShim.expr(fn(SparkShim.column(exprs(0)), SparkShim.column(exprs(1)), SparkShim.column(exprs(2))))
         )
     }
     def wrap(fn:(Column, Column, Column, Column) => Column, name:String) : FunctionDescription = {
         (
             FunctionIdentifier(name),
             new ExpressionInfo(classOf[functions].getCanonicalName, name),
-            exprs => fn(new Column(exprs(0)), new Column(exprs(1)), new Column(exprs(2)), new Column(exprs(3))).expr
+            exprs => SparkShim.expr(fn(SparkShim.column(exprs(0)), SparkShim.column(exprs(1)), SparkShim.column(exprs(2)), SparkShim.column(exprs(3))))
         )
     }
 

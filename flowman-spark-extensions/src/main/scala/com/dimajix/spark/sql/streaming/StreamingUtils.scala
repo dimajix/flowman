@@ -1,8 +1,8 @@
 package com.dimajix.spark.sql.streaming
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
-import org.apache.spark.sql.execution.LogicalRDD
 import org.apache.spark.sql.execution.streaming.LongOffset
 import org.apache.spark.sql.execution.streaming.Offset
 import org.apache.spark.sql.execution.streaming.Source
@@ -24,10 +24,11 @@ object StreamingUtils {
             override def schema: StructType = triggerDF.schema
             override def getOffset: Option[Offset] = Some(LongOffset(offset))
             override def getBatch(start: Option[Offset], end: Offset): DataFrame = {
-                val logicalPlan = LogicalRDD(
+                val logicalPlan = SparkShim.logicalRDD(
                     triggerDF.schema.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()),
                     triggerDF.queryExecution.toRdd,
-                    isStreaming = true)(spark)
+                    isStreaming = true,
+                    spark)
                 DataFrameBuilder.ofRows(spark, logicalPlan)
             }
             override def stop(): Unit = {}

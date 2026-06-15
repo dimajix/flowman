@@ -25,7 +25,7 @@ Building Flowman with the default settings (i.e. newest supported Spark and Hado
 mvn clean install
 ```
 
-The default open source build currently targets Spark 4.0, Scala 2.13, Hadoop 3.4, and Java 17.
+The default open source build currently targets Spark 4.1, Scala 2.13, Hadoop 3.4, and Java 17.
 
 ### Main Artifacts
 
@@ -108,6 +108,7 @@ using the correct version. The following profiles are available:
 * spark-3.4
 * spark-3.5
 * spark-4.0
+* spark-4.1
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
@@ -126,12 +127,14 @@ The main open source compatibility targets are:
 
 * Spark 3.5 with Scala 2.12 and Java 11
 * Spark 4.0 with Scala 2.13 and Java 17
+* Spark 4.1 with Scala 2.13 and Java 17
 
-To validate both package variants locally, run the package phase with the matching JDK:
+To validate the main package variants locally, run the package phase with the matching JDK:
 
 ```shell
 JAVA_HOME=/path/to/jdk-11 mvn clean package -Pspark-3.5 -DskipTests
 JAVA_HOME=/path/to/jdk-17 mvn clean package -Pspark-4.0 -DskipTests
+JAVA_HOME=/path/to/jdk-17 mvn clean package -Pspark-4.1 -DskipTests
 ```
 
 
@@ -195,6 +198,12 @@ mvn clean install -Pspark-3.5 -Phadoop-3.3 -Dhadoop.version=3.3.4 -DskipTests
 
 ```shell
 mvn clean install -Pspark-4.0 -Phadoop-3.4 -DskipTests
+```
+
+#### Spark 4.1 and Hadoop 3.4
+
+```shell
+mvn clean install -Pspark-4.1 -Phadoop-3.4 -DskipTests
 ```
 
 

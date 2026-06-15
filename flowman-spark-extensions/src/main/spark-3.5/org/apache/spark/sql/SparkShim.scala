@@ -315,6 +315,29 @@ object SparkShim {
         LogicalRDD(output, rdd, isStreaming = isStreaming)(spark)
     }
 
+    private def streamingClass(name: String): Class[_] = {
+        try {
+            Class.forName(s"org.apache.spark.sql.execution.streaming.runtime.$name")
+        }
+        catch {
+            case _: ClassNotFoundException => Class.forName(s"org.apache.spark.sql.execution.streaming.$name")
+        }
+    }
+
+    def longOffset(offset: Long): org.apache.spark.sql.execution.streaming.Offset = {
+        val module = streamingClass("LongOffset$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", java.lang.Long.TYPE)
+            .invoke(module, Long.box(offset))
+            .asInstanceOf[org.apache.spark.sql.execution.streaming.Offset]
+    }
+
+    def streamingExecutionRelation(source: org.apache.spark.sql.execution.streaming.Source, spark: SparkSession): LogicalPlan = {
+        val module = streamingClass("StreamingExecutionRelation$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", classOf[org.apache.spark.sql.execution.streaming.Source], classOf[SparkSession])
+            .invoke(module, source, spark)
+            .asInstanceOf[LogicalPlan]
+    }
+
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.GlobalTempView
     val PersistedView : ViewType = org.apache.spark.sql.catalyst.analysis.PersistedView

@@ -564,10 +564,12 @@ class SqlBuilder private(
 
     object ReplaceView extends Rule[LogicalPlan] {
         override def apply(plan: LogicalPlan): LogicalPlan = plan.transformDown {
-            case view: View =>
+            case view: View if view.desc.identifier.database.isDefined =>
                 val m = view.desc
                 val cols = view.output.map(a => AttributeReference(a.name, a.dataType, a.nullable, a.metadata)(a.exprId, a.qualifier))
                 HiveTableRelation(view.desc, cols, Seq())
+            case view: View =>
+                apply(view.child)
         }
     }
 

@@ -28,6 +28,7 @@ import org.apache.spark.paths.SparkPath
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
+import org.apache.spark.sql.catalyst.analysis.UnresolvedFunction
 import org.apache.spark.sql.catalyst.analysis.ViewType
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
@@ -40,10 +41,19 @@ import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.And
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.catalyst.expressions.EqualNullSafe
+import org.apache.spark.sql.catalyst.expressions.EqualTo
 import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.GreaterThan
+import org.apache.spark.sql.catalyst.expressions.GreaterThanOrEqual
 import org.apache.spark.sql.catalyst.expressions.GroupingSets
+import org.apache.spark.sql.catalyst.expressions.LessThan
+import org.apache.spark.sql.catalyst.expressions.LessThanOrEqual
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.expressions.Not
+import org.apache.spark.sql.catalyst.expressions.Or
 import org.apache.spark.sql.catalyst.plans.logical.Aggregate
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.util.BadRecordException
@@ -327,7 +337,47 @@ object SparkShim {
         LogicalRDD(output, rdd, isStreaming = isStreaming)(spark.asInstanceOf[ClassicSparkSession])
     }
 
-    def expr(col: Column): Expression = col.expr
+    private def streamingClass(name: String): Class[_] = {
+        try {
+            Class.forName(s"org.apache.spark.sql.execution.streaming.runtime.$name")
+        }
+        catch {
+            case _: ClassNotFoundException => Class.forName(s"org.apache.spark.sql.execution.streaming.$name")
+        }
+    }
+
+    def longOffset(offset: Long): org.apache.spark.sql.execution.streaming.Offset = {
+        val module = streamingClass("LongOffset$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", java.lang.Long.TYPE)
+            .invoke(module, Long.box(offset))
+            .asInstanceOf[org.apache.spark.sql.execution.streaming.Offset]
+    }
+
+    def streamingExecutionRelation(source: org.apache.spark.sql.execution.streaming.Source, spark: SparkSession): LogicalPlan = {
+        val module = streamingClass("StreamingExecutionRelation$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", classOf[org.apache.spark.sql.execution.streaming.Source], classOf[SparkSession])
+            .invoke(module, source, spark)
+            .asInstanceOf[LogicalPlan]
+    }
+
+    private def normalizeExpression(expression: Expression): Expression = expression.transformUp {
+        case f: UnresolvedFunction if f.nameParts.length == 1 =>
+            val args = f.arguments
+            f.nameParts.head.toLowerCase match {
+                case "=" if args.length == 2 => EqualTo(args(0), args(1))
+                case "<=>" if args.length == 2 => EqualNullSafe(args(0), args(1))
+                case "<" if args.length == 2 => LessThan(args(0), args(1))
+                case "<=" if args.length == 2 => LessThanOrEqual(args(0), args(1))
+                case ">" if args.length == 2 => GreaterThan(args(0), args(1))
+                case ">=" if args.length == 2 => GreaterThanOrEqual(args(0), args(1))
+                case "and" if args.length == 2 => And(args(0), args(1))
+                case "or" if args.length == 2 => Or(args(0), args(1))
+                case "not" if args.length == 1 => Not(args(0))
+                case _ => f
+            }
+    }
+
+    def expr(col: Column): Expression = normalizeExpression(col.expr)
     def column(expression: Expression): Column = ColumnHelper(expression)
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView

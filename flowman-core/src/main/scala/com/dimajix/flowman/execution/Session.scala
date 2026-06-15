@@ -370,6 +370,9 @@ final class Session private[execution](
             .config(sparkConf)
             .appName(sparkName)
             .master(sparkMaster)
+        if (sparkConf.getOption("spark.sql.ansi.enabled").isEmpty) {
+            sessionBuilder.config("spark.sql.ansi.enabled", "false")
+        }
         if (flowmanConf.sparkEnableHive) {
             logger.info("Enabling Spark Hive support")
             sessionBuilder.enableHiveSupport()
@@ -384,6 +387,9 @@ final class Session private[execution](
             if (!SparkShim.isStaticConf(key)) {
                 spark.conf.set(key, value)
             }
+        }
+        if (sparkConf.getOption("spark.sql.ansi.enabled").isEmpty) {
+            spark.conf.set("spark.sql.ansi.enabled", "false")
         }
 
         // Set checkpoint directory if not already specified

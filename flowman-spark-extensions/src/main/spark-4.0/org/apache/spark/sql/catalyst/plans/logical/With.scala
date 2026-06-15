@@ -19,12 +19,32 @@ package org.apache.spark.sql.catalyst.plans.logical
 object With {
     def unapply(p: LogicalPlan) : Option[(LogicalPlan, Seq[(String, SubqueryAlias)], Boolean)] = {
         p match {
-            case UnresolvedWith(child, cteRelations, allowRecursion) => Some((child, cteRelations, allowRecursion))
+            case uw: UnresolvedWith =>
+                val cteRelations = uw.cteRelations.asInstanceOf[Seq[Product]].map { cteRelation =>
+                    (
+                        cteRelation.productElement(0).asInstanceOf[String],
+                        cteRelation.productElement(1).asInstanceOf[SubqueryAlias]
+                    )
+                }
+                Some((uw.child, cteRelations, uw.allowRecursion))
             case _ => None
         }
     }
 
     def apply(child:LogicalPlan, cteRelations:Seq[(String, SubqueryAlias)], allowRecursion:Boolean) : UnresolvedWith = {
-        UnresolvedWith(child, cteRelations, allowRecursion)
+        val spark41CteRelations = cteRelations.map { case (name, alias) => (name, alias, None) }
+        val constructorCteRelations =
+            if (com.dimajix.spark.SPARK_VERSION_MAJOR > 4 || com.dimajix.spark.SPARK_VERSION_MINOR >= 1)
+                spark41CteRelations
+            else
+                cteRelations
+
+        val module = Class.forName("org.apache.spark.sql.catalyst.plans.logical.UnresolvedWith$")
+            .getField("MODULE$")
+            .get(null)
+        module.getClass
+            .getMethod("apply", classOf[LogicalPlan], classOf[Seq[_]], java.lang.Boolean.TYPE)
+            .invoke(module, child, constructorCteRelations, Boolean.box(allowRecursion))
+            .asInstanceOf[UnresolvedWith]
     }
 }

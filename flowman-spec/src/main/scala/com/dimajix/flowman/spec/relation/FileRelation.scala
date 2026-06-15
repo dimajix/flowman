@@ -160,6 +160,7 @@ case class FileRelation(
 
         // Install callback to refresh DataFrame when data is overwritten
         execution.addResource(resource) {
+            df.sparkSession.catalog.refreshByPath(qualifiedLocation.toString)
             df.queryExecution.logical.refresh()
         }
 
@@ -453,6 +454,8 @@ case class FileRelation(
         else {
             truncateUnpartitionedFiles()
         }
+
+        execution.refreshResource(resource)
     }
 
     private def truncatePartitionedFiles(partitions:Map[String,FieldValue]) : Unit = {

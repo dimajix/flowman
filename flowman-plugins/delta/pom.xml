@@ -21,6 +21,7 @@
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
         <delta.version>3.0.0</delta.version>
         <delta.artifact>delta-spark</delta.artifact>
+        <delta-source.version>${spark-source.version}</delta-source.version>
         <delta.scope>compile</delta.scope>
     </properties>
 
@@ -130,6 +131,14 @@
                 <delta.artifact>delta-spark</delta.artifact>
             </properties>
         </profile>
+        <profile>
+            <id>spark-4.1</id>
+            <properties>
+                <delta.version>4.2.0</delta.version>
+                <delta.artifact>delta-spark</delta.artifact>
+                <delta-source.version>4.1</delta-source.version>
+            </properties>
+        </profile>
     </profiles>
 
     <build>
@@ -165,7 +174,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/src/main/spark-${spark-api.version}</source>
+                                <source>${project.basedir}/src/main/spark-${delta-source.version}</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -177,7 +186,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/src/main/spark-${spark-api.version}</source>
+                                <source>${project.basedir}/src/main/spark-${delta-source.version}</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -219,5 +228,3 @@
         </dependency>
     </dependencies>
 </project>
-
-

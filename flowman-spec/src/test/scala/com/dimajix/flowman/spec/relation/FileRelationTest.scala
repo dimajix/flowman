@@ -25,6 +25,7 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.google.common.io.Resources
+import org.apache.spark.SparkException
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.Dataset
@@ -56,6 +57,8 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.UtcTimestamp
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.SPARK_VERSION_MAJOR
+import com.dimajix.spark.SPARK_VERSION_MINOR
 import com.dimajix.spark.sql.streaming.StreamingUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -1942,7 +1945,13 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.write(execution, df, Map(), OutputMode.OVERWRITE)
 
         // == Read ==================================================================================================
-        df2.count() should be (4)
+        if (SPARK_VERSION_MAJOR >= 4) {
+            a[SparkException] should be thrownBy df2.count()
+            relation.read(execution, Map()).count() should be (4)
+        }
+        else {
+            df2.count() should be (4)
+        }
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)

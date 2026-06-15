@@ -123,6 +123,7 @@ using the correct version. The following profiles are available:
 * spark-3.5
 * spark-4.0
 * spark-4.1
+* spark-4.2 (preview)
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
@@ -142,6 +143,7 @@ The main open source compatibility targets are:
 * Spark 3.5 with Scala 2.12 and Java 11
 * Spark 4.0 with Scala 2.13 and Java 17
 * Spark 4.1 with Scala 2.13 and Java 17
+* Spark 4.2 preview with Scala 2.13 and Java 17
 
 To validate the main package variants locally, run the package phase with the matching JDK:
 
@@ -149,6 +151,7 @@ To validate the main package variants locally, run the package phase with the ma
 JAVA_HOME=/path/to/jdk-11 mvn clean package -Pspark-3.5 -DskipTests
 JAVA_HOME=/path/to/jdk-17 mvn clean package -Pspark-4.0 -DskipTests
 JAVA_HOME=/path/to/jdk-17 mvn clean package -Pspark-4.1 -DskipTests
+JAVA_HOME=/path/to/jdk-17 mvn clean package -Pspark-4.2 -DskipTests
 ```
 
 
@@ -208,6 +211,11 @@ mvn clean install -Pspark-4.0 -Phadoop-3.4 -DskipTests
 #### Spark 4.1 and Hadoop 3.4
 ```shell
 mvn clean install -Pspark-4.1 -Phadoop-3.4 -DskipTests
+```
+
+#### Spark 4.2 preview and Hadoop 3.5
+```shell
+mvn clean install -Pspark-4.2 -DskipTests
 ```
 
 

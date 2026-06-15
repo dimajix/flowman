@@ -647,8 +647,8 @@ final case class HiveTableRelation(
                         case StringType =>
                             desiredSchema.get(field.name).map { dfield =>
                                 dfield.dataType match {
-                                    case VarcharType(n) => field.copy(dataType = VarcharType(n))
-                                    case CharType(n) => field.copy(dataType = CharType(n))
+                                    case varcharType: VarcharType => field.copy(dataType = varcharType)
+                                    case charType: CharType => field.copy(dataType = charType)
                                     case _ => field
                                 }
                             }.getOrElse(field)

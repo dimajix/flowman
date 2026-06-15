@@ -59,6 +59,15 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>spark-4.2</id>
+            <properties>
+                <spark-source.version>4.2</spark-source.version>
+            </properties>
+        </profile>
+    </profiles>
+
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>

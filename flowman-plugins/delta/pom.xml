@@ -139,6 +139,14 @@
                 <delta-source.version>4.1</delta-source.version>
             </properties>
         </profile>
+        <profile>
+            <id>spark-4.2</id>
+            <properties>
+                <delta.version>4.3.0-rc1</delta.version>
+                <delta.artifact>delta-spark</delta.artifact>
+                <delta-source.version>4.1</delta-source.version>
+            </properties>
+        </profile>
     </profiles>
 
     <build>

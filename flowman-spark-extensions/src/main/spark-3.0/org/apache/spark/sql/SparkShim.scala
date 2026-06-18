@@ -123,6 +123,10 @@ object SparkShim {
 
     def functionRegistry(spark:SparkSession) : FunctionRegistry = spark.sessionState.functionRegistry
 
+    def registerFunction(spark:SparkSession, name:org.apache.spark.sql.catalyst.FunctionIdentifier, info:org.apache.spark.sql.catalyst.expressions.ExpressionInfo, builder:org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder) : Unit = {
+        functionRegistry(spark).registerFunction(name, info, builder)
+    }
+
     def newCreateViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
         CreateViewCommand(table, Nil, None, Map(), Some(select), plan, allowExisting, replace, SparkShim.PersistedView)
     }

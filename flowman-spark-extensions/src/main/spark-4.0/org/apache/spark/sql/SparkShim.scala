@@ -149,6 +149,21 @@ object SparkShim {
 
     def functionRegistry(spark:SparkSession) : FunctionRegistry = spark.sessionState.functionRegistry
 
+    def registerFunction(spark:SparkSession, name:org.apache.spark.sql.catalyst.FunctionIdentifier, info:org.apache.spark.sql.catalyst.expressions.ExpressionInfo, builder:org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder) : Unit = {
+        val registry = functionRegistry(spark)
+        try {
+            registry.registerFunction(name, info, builder)
+        }
+        catch {
+            case e:AssertionError if Option(e.getMessage).exists(_.contains("Function identifier must be fully qualified")) =>
+                registry.registerFunction(
+                    org.apache.spark.sql.catalyst.FunctionIdentifier(name.funcName, Some("session"), Some("system")),
+                    info,
+                    builder
+                )
+        }
+    }
+
     def newCreateViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
         CreateViewCommand(
             name = table,

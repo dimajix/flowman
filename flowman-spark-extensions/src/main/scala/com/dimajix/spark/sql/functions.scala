@@ -69,7 +69,7 @@ object functions {
 
     def register(spark:SparkSession, fn:FunctionDescription) : Unit = {
         val (id, info, builder) = fn
-        SparkShim.functionRegistry(spark).registerFunction(id, info, builder)
+        SparkShim.registerFunction(spark, id, info, builder)
     }
     def register(spark:SparkSession, fn:(Column) => Column, name:String) : Unit = {
         register(spark, wrap(fn, name))

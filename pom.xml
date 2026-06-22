@@ -1136,6 +1136,9 @@
         </profile>
         <profile>
             <id>spark-4.1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <java.version>17</java.version>
                 <hadoop.version>3.4.2</hadoop.version>

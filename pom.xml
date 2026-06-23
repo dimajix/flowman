@@ -1173,11 +1173,11 @@
                 <httpclient.version>4.5.14</httpclient.version>
                 <httpcore.version>4.4.16</httpcore.version>
                 <ivy.version>2.5.3</ivy.version>
-                <jackson.version>2.21.2</jackson.version>
-                <jackson-api.version>2.21</jackson-api.version>
+                <jackson.version>2.20.0</jackson.version>
+                <jackson-api.version>2.20</jackson-api.version>
                 <jackson-annotations.version>${jackson-api.version}</jackson-annotations.version>
                 <jackson-source.version>2.18</jackson-source.version>
-                <jackson-databind.version>2.21.2</jackson-databind.version>
+                <jackson-databind.version>2.20.0</jackson-databind.version>
                 <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
@@ -1257,11 +1257,11 @@
                 <httpclient.version>4.5.14</httpclient.version>
                 <httpcore.version>4.4.16</httpcore.version>
                 <ivy.version>2.5.3</ivy.version>
-                <jackson.version>2.21.2</jackson.version>
-                <jackson-api.version>2.21</jackson-api.version>
+                <jackson.version>2.20.0</jackson.version>
+                <jackson-api.version>2.20</jackson-api.version>
                 <jackson-annotations.version>${jackson-api.version}</jackson-annotations.version>
                 <jackson-source.version>2.18</jackson-source.version>
-                <jackson-databind.version>2.21.2</jackson-databind.version>
+                <jackson-databind.version>2.20.0</jackson-databind.version>
                 <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>

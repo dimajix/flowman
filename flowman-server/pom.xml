@@ -98,54 +98,6 @@
         </plugins>
     </build>
 
-    <profiles>
-        <profile>
-            <id>spark-4.0</id>
-            <dependencies>
-                <dependency>
-                    <groupId>jakarta.ws.rs</groupId>
-                    <artifactId>jakarta.ws.rs-api</artifactId>
-                    <version>3.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>javax.ws.rs</groupId>
-                    <artifactId>javax.ws.rs-api</artifactId>
-                    <version>2.1.1</version>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
-            <id>spark-4.1</id>
-            <dependencies>
-                <dependency>
-                    <groupId>jakarta.ws.rs</groupId>
-                    <artifactId>jakarta.ws.rs-api</artifactId>
-                    <version>3.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>javax.ws.rs</groupId>
-                    <artifactId>javax.ws.rs-api</artifactId>
-                    <version>2.1.1</version>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
-            <id>spark-4.2</id>
-            <dependencies>
-                <dependency>
-                    <groupId>jakarta.ws.rs</groupId>
-                    <artifactId>jakarta.ws.rs-api</artifactId>
-                    <version>3.0.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>javax.ws.rs</groupId>
-                    <artifactId>javax.ws.rs-api</artifactId>
-                    <version>2.1.1</version>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
-
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
@@ -177,6 +129,17 @@
         <dependency>
             <groupId>args4j</groupId>
             <artifactId>args4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>2.1.1</version>
         </dependency>
 
         <!--

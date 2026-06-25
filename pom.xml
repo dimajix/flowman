@@ -1114,8 +1114,8 @@
                 <json4s.version>4.0.7</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.16.0</libthrift.version>
-                <log4j.version>2.17.2</log4j.version>
-                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
+                <log4j.version>2.24.3</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j2-impl</log4j.slf4j-impl>
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.87.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
@@ -1127,7 +1127,7 @@
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.9</scalatest.version>
-                <slf4j.version>2.0.7</slf4j.version>
+                <slf4j.version>2.0.16</slf4j.version>
                 <slf4j-api.version>2</slf4j-api.version>
                 <snakeyaml.version>2.3</snakeyaml.version>
                 <snakeyaml.scope>provided</snakeyaml.scope>
@@ -1201,8 +1201,8 @@
                 <json4s.version>4.0.7</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.16.0</libthrift.version>
-                <log4j.version>2.17.2</log4j.version>
-                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
+                <log4j.version>2.24.3</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j2-impl</log4j.slf4j-impl>
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.2.7.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
@@ -1214,7 +1214,7 @@
                 <scala-xml.version>2.4.0</scala-xml.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.19</scalatest.version>
-                <slf4j.version>2.0.7</slf4j.version>
+                <slf4j.version>2.0.17</slf4j.version>
                 <slf4j-api.version>2</slf4j-api.version>
                 <snakeyaml.version>2.5</snakeyaml.version>
                 <snakeyaml.scope>provided</snakeyaml.scope>

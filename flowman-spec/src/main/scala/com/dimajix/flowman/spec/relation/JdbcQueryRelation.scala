@@ -245,7 +245,7 @@ case class JdbcQueryRelation(
     private lazy val dependencies : Seq[String] = {
         val statement = CCJSqlParserUtil.parse(query)
         val tablesNamesFinder = new TablesNamesFinder()
-        tablesNamesFinder.getTableList(statement).asScala
+        tablesNamesFinder.getTableList(statement).asScala.toSeq
     }
 
     private lazy val query: String = {

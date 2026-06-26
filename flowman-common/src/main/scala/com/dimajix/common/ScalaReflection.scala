@@ -37,6 +37,6 @@ object ScalaReflection {
                 primaryConstructorSymbol.get.asMethod.paramLists
             }
         }
-        params.flatten
+        params.flatten.toSeq
     }
 }

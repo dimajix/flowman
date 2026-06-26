@@ -57,7 +57,7 @@ object UtcTimestamp {
             def queryFrom(var1: TemporalAccessor) : ZonedDateTime =  UtcTimestamp.from(var1)
         }
         val dt = formatter.parse(value, query)
-        new UtcTimestamp(dt.toEpochSecond * 1000l)
+        new UtcTimestamp(dt.toEpochSecond * 1000L)
     }
 
     /**
@@ -122,7 +122,7 @@ case class UtcTimestamp(dt:LocalDateTime) {
     }
 
     def toTimestamp() : Timestamp = {
-        new Timestamp(toEpochSeconds * 1000l)
+        new Timestamp(toEpochSeconds() * 1000L)
     }
 
     def getYear() : Int = dt.getYear

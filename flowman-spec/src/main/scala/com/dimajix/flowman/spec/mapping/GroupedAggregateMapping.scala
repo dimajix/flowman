@@ -20,12 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
-import org.apache.spark.sql.catalyst.expressions.NamedExpression
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.expr
-import org.apache.spark.sql.functions.grouping_id
-import org.apache.spark.sql.functions.struct
-
+import org.apache.spark.sql.catalyst.expressions.{Alias, NamedExpression}
+import org.apache.spark.sql.functions.{col, expr, first, grouping_id, struct}
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
@@ -152,7 +148,7 @@ final case class GroupedAggregateMapping(
         val results = groups.zip(groupIds).map { case ((name,group),mask) =>
             val dimensions = group.dimensions
             name -> extractGroup(cache, group, dimensions, mask)
-        }
+        }.toMap
 
         results ++ Map("cache" -> cache)
     }
@@ -198,7 +194,7 @@ final case class GroupedAggregateMapping(
             val dimensions = group.dimensions.map(d => groupPrefix + "." + d)
             val mask = groupingMask & ~(1 << (numGroups - 1 - index))
             name -> extractGroup(cache, group, dimensions,  mask)
-        }
+        }.toMap
 
         results ++ Map("cache" -> cache)
     }
@@ -223,12 +219,46 @@ final case class GroupedAggregateMapping(
 
     private def performGroupedAggregation(input:DataFrame, dimensions:Seq[Column], groupings:Seq[Seq[Column]]) : DataFrame = {
         val aggregates = aggregations.toSeq.map(kv => expr(kv._2).as(kv._1))
+
+        // HELPER: Strip aliases.
+        // We need this because Spark 4.0's Analyzer can fail to match an aliased grouping key
+        // to a grouping_id argument if their internal Expression IDs differ.
+        // By stripping the alias, we force Spark to compare the underlying Structs, which match perfectly.
+        def unalias(c: Column): Column = SparkShim.expr(c) match {
+            case a: Alias => SparkShim.column(a.child)
+            case _ => c
+        }
+
+        // 1. Prepare Un-Aliased Columns for Grouping
+        // We apply unalias to both the dimension list and the grouping sets.
+        val groupingExprs = dimensions.map(unalias)
+        val groupingSetExprs = groupings.map(g => g.map(unalias))
+
+        // 2. Output Projection
+        // We wrap the ORIGINAL (aliased) dimensions in first() to satisfy ANSI strictness.
+        // This ensures the output columns retain their names (_flowman_grouping_set_X).
+        val projectedDimensions = dimensions.map { d =>
+            val named = SparkShim.expr(d).asInstanceOf[NamedExpression]
+            first(d).as(named.name)
+        }
+
+        // 3. Calculate grouping_id
+        // We pass the UN-ALIASED columns explicitly.
+        // Otherwise, groupingMask ends up having values like:
+        //   59 (...111011), 61 (...111101), 62 (...111110)
+        // Instead of
+        //   3 (011), 5 (101), 6 (110)
+        //
+        //).
+        // Un-aliased: ensures the column matches the GROUP BY clause (resolves "MISMATCH" error).
+        val groupingIdCol = grouping_id(groupingExprs:_*)
+
         val expressions = (
             aggregates ++
-                dimensions :+
-                grouping_id().as("_flowman_grouping_id")
+                projectedDimensions :+
+                groupingIdCol.as("_flowman_grouping_id")
             )
-            .map(_.expr.asInstanceOf[NamedExpression])
+            .map(c => SparkShim.expr(c).asInstanceOf[NamedExpression])
 
         val df =
             if (partitions > 0)
@@ -238,8 +268,8 @@ final case class GroupedAggregateMapping(
 
         DataFrameBuilder.ofRows(input.sparkSession,
             SparkShim.groupingSetAggregate(
-                dimensions.map(_.expr),
-                groupings.map(g => g.map(_.expr)),
+                groupingExprs.map(SparkShim.expr),
+                groupingSetExprs.map(g => g.map(SparkShim.expr)),
                 expressions,
                 df.queryExecution.logical
             )

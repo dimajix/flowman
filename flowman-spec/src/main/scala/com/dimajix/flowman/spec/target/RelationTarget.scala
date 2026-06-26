@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.target
 
 import java.time.Instant
 
+import scala.collection.compat._
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -166,7 +167,7 @@ final case class RelationTarget(
             case Phase.CREATE => rel.provides(Operation.CREATE)
             case Phase.DESTROY => rel.provides(Operation.DESTROY)
             case Phase.BUILD|Phase.TRUNCATE if mapping.nonEmpty =>
-                val partition = this.partition.mapValues(v => SingleValue(v))
+                val partition = this.partition.view.mapValues(v => SingleValue(v)).toMap
                 rel.provides(Operation.WRITE, partition)
             case Phase.BUILD =>
                 // This special case is mainly for implementing correct dependency management with VIEWs
@@ -186,7 +187,7 @@ final case class RelationTarget(
             case Phase.CREATE => rel.requires(Operation.CREATE)
             case Phase.DESTROY => rel.requires(Operation.DESTROY)
             case Phase.BUILD if mapping.nonEmpty =>
-                val partition = this.partition.mapValues(v => SingleValue(v))
+                val partition = this.partition.view.mapValues(v => SingleValue(v)).toMap
                 MappingUtils.requires(context, mapping.mapping) ++ rel.requires(Operation.WRITE, partition)
             case Phase.BUILD =>
                 // This special case is mainly for implementing correct dependency management with VIEWs
@@ -207,7 +208,7 @@ final case class RelationTarget(
      * @return
      */
     override def dirty(execution: Execution, phase: Phase): Trilean = {
-        val partition = this.partition.mapValues(v => SingleValue(v))
+        val partition = this.partition.view.mapValues(v => SingleValue(v)).toMap
         val rel = relation.value
 
         phase match {
@@ -253,12 +254,12 @@ final case class RelationTarget(
             case Phase.CREATE|Phase.DESTROY =>
                 linker.write(relation, Map.empty[String,SingleValue])
             case Phase.BUILD if (mapping.nonEmpty) =>
-                val partition = this.partition.mapValues(v => SingleValue(v))
+                val partition = this.partition.view.mapValues(v => SingleValue(v)).toMap
                 val mapOut = linker.input(mapping.mapping, mapping.output)
                 val relRef = linker.write(relation, partition)
                 linker.write(mapOut, relRef)
             case Phase.TRUNCATE =>
-                val partition = this.partition.mapValues(v => SingleValue(v))
+                val partition = this.partition.view.mapValues(v => SingleValue(v)).toMap
                 linker.write(relation, partition)
             case _ =>
         }
@@ -294,7 +295,7 @@ final case class RelationTarget(
         require(execution != null)
 
         if (mapping.nonEmpty) {
-            val partition = this.partition.mapValues(v => SingleValue(v))
+            val partition = this.partition.view.mapValues(v => SingleValue(v)).toMap
 
             logger.info(s"Writing mapping output '${mapping}' to relation '${relation.identifier}' into partition (${partition.map(p => p._1 + "=" + p._2.value).mkString(",")}) with mode '$mode'")
             val map = context.getMapping(mapping.mapping)
@@ -322,7 +323,7 @@ final case class RelationTarget(
         require(execution != null)
 
         def verifyWithData() : Status = {
-            val partition = this.partition.mapValues(v => SingleValue(v))
+            val partition = this.partition.view.mapValues(v => SingleValue(v)).toMap
             val rel = relation.value
             if (rel.loaded(execution, partition) == No) {
                 val policy = VerifyPolicy.ofString(execution.flowmanConf.getConf(FlowmanConf.DEFAULT_TARGET_VERIFY_POLICY))
@@ -385,7 +386,7 @@ final case class RelationTarget(
         require(execution != null)
 
         if (mapping.nonEmpty) {
-            val partition = this.partition.mapValues(v => SingleValue(v))
+            val partition = this.partition.view.mapValues(v => SingleValue(v)).toMap
 
             logger.info(s"Truncating partition $partition of relation '${relation.identifier}'")
             val rel = relation.value

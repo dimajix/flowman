@@ -499,9 +499,9 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
 
         val metricSystem = executor.metricSystem
         val metricSink = stub[MetricSink]
-        (metricSink.addBoard _).when(*,*).returns(Unit)
-        (metricSink.commit _).when(*,*).returns(Unit)
-        (metricSink.removeBoard _).when(*).returns(Unit)
+        (metricSink.addBoard _).when(*,*).returns(())
+        (metricSink.commit _).when(*,*).returns(())
+        (metricSink.removeBoard _).when(*).returns(())
 
         metricSystem.addSink(metricSink)
 

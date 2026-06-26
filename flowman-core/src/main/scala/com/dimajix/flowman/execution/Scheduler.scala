@@ -40,7 +40,7 @@ object Scheduler {
             }
         }
 
-        orderedTargets
+        orderedTargets.toSeq
     }
 }
 

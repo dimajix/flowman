@@ -72,7 +72,9 @@ object CsvUtils {
       */
     def dropHeaderLine(iter: Iterator[String], options: CsvOptions): Iterator[String] = {
         skipComments(iter, options)
-        if (iter.hasNext) iter.drop(1)
-        iter
+        if (iter.hasNext)
+            iter.drop(1)
+        else
+            iter
     }
 }

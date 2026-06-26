@@ -190,7 +190,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
 
         val inputSchema = StructType(Seq(
             Field("commented", VarcharType(20), description=Some("some id")),
-            Field("uncommented", IntegerType)
+            Field("uncommented", StringType)
         ))
         val result = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> inputSchema))
 

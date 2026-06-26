@@ -209,7 +209,7 @@ final case class HiveTableRelation(
             case OutputMode.ERROR_IF_EXISTS =>
                 if (loaded()) {
                     if (partitionSpec.nonEmpty)
-                        throw new PartitionAlreadyExistsException(table.database.getOrElse(""), table.table, partitionSpec.mapValues(_.toString).toMap)
+                    throw new PartitionAlreadyExistsException(table.database.getOrElse(""), table.table, partitionSpec.mapValues(_.toString).toMap)
                     else
                         throw new TableAlreadyExistsException(table.database.getOrElse(""), table.table)
                 }
@@ -230,7 +230,7 @@ final case class HiveTableRelation(
             val overwrite = mode == OutputMode.OVERWRITE || mode == OutputMode.OVERWRITE_DYNAMIC
             val cmd = InsertIntoHiveTable(
                 table = hiveTable,
-                partition = partitionSpec.catalogPartition.mapValues(Some(_)),
+                partition = partitionSpec.catalogPartition.mapValues(Some(_):Option[String]).toMap,
                 query = query,
                 overwrite = overwrite,
                 ifPartitionNotExists = false,
@@ -647,8 +647,8 @@ final case class HiveTableRelation(
                         case StringType =>
                             desiredSchema.get(field.name).map { dfield =>
                                 dfield.dataType match {
-                                    case VarcharType(n) => field.copy(dataType = VarcharType(n))
-                                    case CharType(n) => field.copy(dataType = CharType(n))
+                                    case varcharType: VarcharType => field.copy(dataType = varcharType)
+                                    case charType: CharType => field.copy(dataType = charType)
                                     case _ => field
                                 }
                             }.getOrElse(field)

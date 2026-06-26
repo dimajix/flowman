@@ -20,6 +20,7 @@ import java.net.URL
 import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
+import com.dimajix.common.ParallelCompat._
 import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
@@ -100,6 +101,7 @@ object Module {
                         .filter(f => f.isFile() && patterns.exists(_.matches(f.name)))
                         .map(f => f -> loadFile(f))
                         .seq
+                        .toSeq
                 }
                 else {
                     Seq(file -> loadFile(file))
@@ -188,6 +190,3 @@ final case class Module(
         )
     }
 }
-
-
-

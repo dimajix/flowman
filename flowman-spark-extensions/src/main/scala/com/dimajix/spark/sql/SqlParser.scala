@@ -53,7 +53,7 @@ object SqlParser {
 
         val cteNames =
             allQueries.flatMap (
-                _.collect { case With(_, cteRelations) =>
+                _.collect { case With(_, cteRelations, allowRecursion) =>
                     cteRelations.map(kv => kv._1)
                 }
                 .flatten
@@ -62,7 +62,7 @@ object SqlParser {
 
         val cteDependencies =
             allQueries.flatMap (
-                _.collect { case With(_,cteRelations) =>
+                _.collect { case With(_,cteRelations, allowRecursion) =>
                     cteRelations
                         .map(kv => kv._2.child)
                         .flatMap(resolveDependencies)

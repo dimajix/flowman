@@ -21,6 +21,7 @@
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
         <delta.version>3.0.0</delta.version>
         <delta.artifact>delta-spark</delta.artifact>
+        <delta-source.version>${spark-source.version}</delta-source.version>
         <delta.scope>compile</delta.scope>
     </properties>
 
@@ -122,13 +123,43 @@
         </profile>
         <profile>
             <id>spark-3.5</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <delta.version>3.0.0</delta.version>
                 <delta.artifact>delta-spark</delta.artifact>
             </properties>
+        </profile>
+        <profile>
+            <id>spark-4.1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <delta.version>4.2.0</delta.version>
+                <delta.artifact>delta-spark</delta.artifact>
+                <delta-source.version>4.1</delta-source.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-4.2</id>
+            <properties>
+                <delta.version>4.3.0</delta.version>
+                <delta.artifact>delta-spark</delta.artifact>
+                <delta-source.version>4.1</delta-source.version>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.scalatest</groupId>
+                            <artifactId>scalatest-maven-plugin</artifactId>
+                            <configuration>
+                                <!-- Delta 4.3.0 is still built against Spark 4.1 and is not binary-compatible with Spark 4.2-preview5. -->
+                                <skipTests>true</skipTests>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
         </profile>
     </profiles>
 
@@ -165,7 +196,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/src/main/spark-${spark-api.version}</source>
+                                <source>${project.basedir}/src/main/spark-${delta-source.version}</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -177,7 +208,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/src/main/spark-${spark-api.version}</source>
+                                <source>${project.basedir}/src/main/spark-${delta-source.version}</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -219,5 +250,3 @@
         </dependency>
     </dependencies>
 </project>
-
-

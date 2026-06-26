@@ -270,7 +270,7 @@ final class SessionServiceHandler(
             val session = getSession(request.getSessionId)
             val mapping = getMapping(session, request.getMapping)
             val output = if (request.getOutput.nonEmpty) request.getOutput else "main"
-            val columns = request.getColumnsList.asScala
+            val columns = request.getColumnsList.asScala.toSeq
             val execution = session.execution
 
             val df = execution.instantiate(mapping, output)
@@ -429,7 +429,7 @@ final class SessionServiceHandler(
         respondTo("readRelation", responseObserver) {
             val session = getSession(request.getSessionId)
             val relation = getRelation(session, request.getRelation)
-            val columns = request.getColumnsList.asScala
+            val columns = request.getColumnsList.asScala.toSeq
             val execution = session.execution
             val partition = request.getPartitionMap.asScala.toMap.map { case(k,v) => (k,SingleValue(v)) }
 
@@ -448,7 +448,7 @@ final class SessionServiceHandler(
             val session = getSession(request.getSessionId)
             val context = session.context
             val relations = request.getRelationsList
-                .asScala
+                .asScala.toSeq
                 .map(t => context.getRelation(toModel(t)))
             val phase = toModel(request.getPhase)
             val partition = request.getPartitionMap.asScala.toMap
@@ -532,10 +532,10 @@ final class SessionServiceHandler(
             val session = getSession (request.getSessionId)
             val context = session.context
             val allTargets = request.getTargetsList
-                .asScala
+                .asScala.toSeq
                 .map(t => context.getTarget(toModel(t)))
 
-            val lifecycle = request.getPhasesList ().asScala.map (toModel)
+            val lifecycle = request.getPhasesList ().asScala.toSeq.map (toModel)
             val force = request.getForce
             val keepGoing = request.getKeepGoing
             val dryRun = request.getDryRun
@@ -594,7 +594,7 @@ final class SessionServiceHandler(
     override def executeTest(request: ExecuteTestRequest, responseObserver: StreamObserver[ExecuteTestResponse]): Unit = {
         respondTo("executeTest", responseObserver) {
             val session = getSession(request.getSessionId)
-            val tests = request.getTestsList.asScala.map(toModel)
+            val tests = request.getTestsList.asScala.toSeq.map(toModel)
 
             val status = session.executeTests(tests, request.getKeepGoing, request.getDryRun, request.getParallelism)
 
@@ -655,7 +655,7 @@ final class SessionServiceHandler(
             val session = getSession(request.getSessionId)
             val job = session.getJob(toModel(request.getJob))
 
-            val lifecycle = request.getPhasesList().asScala.map(toModel)
+            val lifecycle = request.getPhasesList().asScala.toSeq.map(toModel)
             val force = request.getForce
             val keepGoing = request.getKeepGoing
             val dryRun = request.getDryRun
@@ -664,7 +664,7 @@ final class SessionServiceHandler(
             val targets = request.getTargetsList
             val dirtyTargets = request.getDirtyTargetsList()
 
-            val status = session.executeJob(job, lifecycle, args.asScala.toMap, targets.asScala, dirtyTargets.asScala, force, keepGoing, dryRun, parallelism)
+            val status = session.executeJob(job, lifecycle, args.asScala.toMap, targets.asScala.toSeq, dirtyTargets.asScala.toSeq, force, keepGoing, dryRun, parallelism)
 
             ExecuteJobResponse.newBuilder()
                 .setStatus(toProto(status))
@@ -712,7 +712,7 @@ final class SessionServiceHandler(
             val session = getSession(request.getSessionId)
             val job = session.getJob(model.JobIdentifier("main"))
 
-            val lifecycle = request.getPhasesList().asScala.map(toModel)
+            val lifecycle = request.getPhasesList().asScala.toSeq.map(toModel)
             val force = request.getForce
             val keepGoing = request.getKeepGoing
             val dryRun = request.getDryRun
@@ -721,7 +721,7 @@ final class SessionServiceHandler(
             val targets = request.getTargetsList
             val dirtyTargets = request.getDirtyTargetsList()
 
-            val status = session.executeJob(job, lifecycle, args.asScala.toMap, targets.asScala, dirtyTargets.asScala, force, keepGoing, dryRun, parallelism)
+            val status = session.executeJob(job, lifecycle, args.asScala.toMap, targets.asScala.toSeq, dirtyTargets.asScala.toSeq, force, keepGoing, dryRun, parallelism)
 
             ExecuteProjectResponse.newBuilder()
                 .setStatus(toProto(status))

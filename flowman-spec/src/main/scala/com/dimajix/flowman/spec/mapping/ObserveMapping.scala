@@ -128,11 +128,11 @@ final case class ObserveMapping(
                         case b: Byte => publishMetric(metricName, b)
                         case s: Short => publishMetric(metricName, s)
                         case i: Int => publishMetric(metricName, i)
-                        case l: Long => publishMetric(metricName, l)
-                        case f: Float => publishMetric(metricName, f)
+                        case l: Long => publishMetric(metricName, l.toDouble)
+                        case f: Float => publishMetric(metricName, f.toDouble)
                         case d: Double => publishMetric(metricName, d)
                         case d: java.math.BigDecimal => publishMetric(metricName, d.doubleValue())
-                        case t: java.sql.Timestamp => publishMetric(metricName, t.getTime)
+                        case t: java.sql.Timestamp => publishMetric(metricName, t.getTime.toDouble)
                         case _ =>
                     }
                 }

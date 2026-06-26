@@ -22,6 +22,7 @@ import java.sql.SQLNonTransientException
 import java.sql.Statement
 import java.util.Locale
 
+import scala.collection.compat._
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -240,7 +242,7 @@ abstract class JdbcTableRelationBase(
                     doAppend(execution, dfExt)
                 }
                 else {
-                    throw new PartitionAlreadyExistsException(tableIdentifier.database.getOrElse(""), tableIdentifier.table, partition.mapValues(_.value))
+                    throw new PartitionAlreadyExistsException(tableIdentifier.database.getOrElse(""), tableIdentifier.table, partition.view.mapValues(_.value).toMap)
                 }
             case OutputMode.UPDATE =>
                 doUpdate(execution, dfExt)
@@ -386,7 +388,7 @@ abstract class JdbcTableRelationBase(
         logger.info(s"Writing JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' using merge operation")
 
         val mergeCondition = condition.getOrElse(this.mergeCondition)
-        val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
+        val sourceColumns = collectColumns(SparkShim.expr(mergeCondition), "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
         val sourceDf = df.select(sourceColumns.toSeq.map(col):_*)
 
         doMerge(execution, sourceDf, None, mergeCondition, clauses)
@@ -728,15 +730,15 @@ abstract class JdbcTableRelationBase(
     private def collectColumns(sourceSchema:StructType, clause:MergeClause, prefix:String) : SetIgnoreCase = {
         clause match {
             case i:InsertClause =>
-                val conditionColumns = i.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
-                val insertColumns = if(i.columns.nonEmpty) i.columns.values.flatMap(c => collectColumns(c.expr, prefix)) else sourceSchema.names.toSeq
+                val conditionColumns = i.condition.map(c => collectColumns(SparkShim.expr(c), prefix)).getOrElse(SetIgnoreCase())
+                val insertColumns = if(i.columns.nonEmpty) i.columns.values.flatMap(c => collectColumns(SparkShim.expr(c), prefix)) else SetIgnoreCase(sourceSchema.names.toSeq)
                 conditionColumns ++ insertColumns
             case u:UpdateClause =>
-                val conditionColumns = u.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
-                val updateColumns = if(u.columns.nonEmpty) u.columns.values.flatMap(c => collectColumns(c.expr, prefix)) else sourceSchema.names.toSeq
+                val conditionColumns = u.condition.map(c => collectColumns(SparkShim.expr(c), prefix)).getOrElse(SetIgnoreCase())
+                val updateColumns = if(u.columns.nonEmpty) u.columns.values.flatMap(c => collectColumns(SparkShim.expr(c), prefix)) else SetIgnoreCase(sourceSchema.names.toSeq)
                 conditionColumns ++ updateColumns
             case d:DeleteClause =>
-                d.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
+                d.condition.map(c => collectColumns(SparkShim.expr(c), prefix)).getOrElse(SetIgnoreCase())
         }
     }
     private def collectColumns(expr:Expression, prefix:String) : SetIgnoreCase = {

@@ -118,7 +118,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("other", "error"))
         mapping.outputs should be (Set("other", "error"))
 
-        (baseMapping.output _).expects().returns(MappingOutputIdentifier("base", "other", Some(project.name)))
+        (() => baseMapping.output()).expects().returns(MappingOutputIdentifier("base", "other", Some(project.name)))
         mapping.output should be (MappingOutputIdentifier("my_project/mock:other"))
 
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
@@ -182,7 +182,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("main"))
         mapping.outputs should be (Set("main"))
 
-        (baseMapping.output _).expects().returns(MappingOutputIdentifier("mock", "main", Some(project.name)))
+        (() => baseMapping.output()).expects().returns(MappingOutputIdentifier("mock", "main", Some(project.name)))
         mapping.output should be (MappingOutputIdentifier("my_project/mock:main"))
 
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)

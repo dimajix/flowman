@@ -53,7 +53,7 @@ class CommandCompleter extends Completer {
                 val args = parser.getArguments.asScala
                 val opts = parser.getOptions.asScala
                 val commands = (args ++ opts).flatMap { opt =>
-                    opt.setter.asAnnotatedElement.getAnnotations.flatMap {
+                    opt.setter.asAnnotatedElement.getAnnotations.toSeq.flatMap {
                         case s: SubCommands =>
                             s.value().map(_.name())
                         case o:Option =>

@@ -129,6 +129,10 @@ object SparkShim {
 
     def functionRegistry(spark:SparkSession) : FunctionRegistry = spark.sessionState.functionRegistry
 
+    def registerFunction(spark:SparkSession, name:org.apache.spark.sql.catalyst.FunctionIdentifier, info:org.apache.spark.sql.catalyst.expressions.ExpressionInfo, builder:org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder) : Unit = {
+        functionRegistry(spark).registerFunction(name, info, builder)
+    }
+
     def newCreateViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
         CreateViewCommand(table, Nil, None, Map(), Some(select), plan, allowExisting, replace, SparkShim.PersistedView, isAnalyzed=true)
     }
@@ -190,6 +194,29 @@ object SparkShim {
     def explainString[T](ds: Dataset[T], extended: Boolean): String = {
         val mode = if (extended) ExtendedMode else SimpleMode
         ds.queryExecution.explainString(mode)
+    }
+
+    private def streamingClass(name: String): Class[_] = {
+        try {
+            Class.forName(s"org.apache.spark.sql.execution.streaming.runtime.$name")
+        }
+        catch {
+            case _: ClassNotFoundException => Class.forName(s"org.apache.spark.sql.execution.streaming.$name")
+        }
+    }
+
+    def longOffset(offset: Long): org.apache.spark.sql.execution.streaming.Offset = {
+        val module = streamingClass("LongOffset$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", java.lang.Long.TYPE)
+            .invoke(module, Long.box(offset))
+            .asInstanceOf[org.apache.spark.sql.execution.streaming.Offset]
+    }
+
+    def streamingExecutionRelation(source: org.apache.spark.sql.execution.streaming.Source, spark: SparkSession): LogicalPlan = {
+        val module = streamingClass("StreamingExecutionRelation$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", classOf[org.apache.spark.sql.execution.streaming.Source], classOf[SparkSession])
+            .invoke(module, source, spark)
+            .asInstanceOf[LogicalPlan]
     }
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView

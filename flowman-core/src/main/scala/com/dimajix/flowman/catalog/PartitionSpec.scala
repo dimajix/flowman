@@ -59,7 +59,7 @@ final case class PartitionSpec(values:MapIgnoreCase[Any]) {
       * @tparam T
       * @return
       */
-    def mapValues[T](fn:(Any) => T) : MapIgnoreCase[T] = values.mapValues(fn)
+    def mapValues[T](fn:(Any) => T) : MapIgnoreCase[T] = MapIgnoreCase(values.mapValues(fn).toMap)
 
     /**
       * Returns a Hadoop path constructed from the partition values

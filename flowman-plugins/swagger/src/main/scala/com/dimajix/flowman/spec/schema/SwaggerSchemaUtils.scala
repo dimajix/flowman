@@ -106,7 +106,7 @@ object SwaggerSchemaUtils {
     def fromSwagger(model:Model, nullable:Boolean) : Seq[Field] = {
         def fromSwaggerRec(model:Model, nullable:Boolean=true) : Seq[Field] = {
             model match {
-                case composed: ComposedModel => composed.getAllOf.asScala.flatMap(m => fromSwaggerRec(m, nullable))
+                case composed: ComposedModel => composed.getAllOf.asScala.flatMap(m => fromSwaggerRec(m, nullable)).toSeq
                 //case array:ArrayModel => Seq(fromSwaggerProperty(array.getItems))
                 case _ => fromSwaggerObject(model.getProperties.asScala.toSeq, "", nullable).fields
             }

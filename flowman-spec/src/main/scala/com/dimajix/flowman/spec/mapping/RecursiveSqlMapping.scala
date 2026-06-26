@@ -27,7 +27,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.SparkShim.expressionEncoderFor
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
 import org.apache.spark.sql.catalyst.plans.logical.Union
@@ -109,8 +108,7 @@ extends BaseMapping {
         val plan = SqlParser.parsePlan(statement)
         val union = findUnion(plan)
         val firstChild = union.children.head
-        val resolvedStart = spark.sessionState.analyzer.execute(firstChild)
-        new Dataset[Row](spark, firstChild, expressionEncoderFor(resolvedStart.schema))
+        DataFrameBuilder.ofRows(spark, firstChild)
     }
     private def nextDf(statement:String, prev:DataFrame) : DataFrame = {
         val spark = prev.sparkSession

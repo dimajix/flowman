@@ -85,8 +85,8 @@ extends BaseMeasure {
                 val (labelColumns,metricColumns) = schema.fields.partition { field => field.dataType match {
                     case _:NumericType => false
                     case StringType => true
-                    case VarcharType(_) => true
-                    case CharType(_) => true
+                    case _: VarcharType => true
+                    case _: CharType => true
                     case BooleanType => true
                     case dt => throw new IllegalArgumentException(s"Unsupported column type $dt in column ${field.name}")
                 }}
@@ -114,8 +114,8 @@ extends BaseMeasure {
         labels.map { field =>
             val value = field.dataType match {
                 case StringType => row.getAs[String](field.name)
-                case CharType(_) => row.getAs[String](field.name)
-                case VarcharType(_) => row.getAs[String](field.name)
+                case _: CharType => row.getAs[String](field.name)
+                case _: VarcharType => row.getAs[String](field.name)
                 case BooleanType => row.getAs[Boolean](field.name).toString
             }
             field.name -> value

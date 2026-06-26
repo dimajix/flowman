@@ -17,18 +17,17 @@
 package com.dimajix.flowman.common
 
 import java.lang.Thread.UncaughtExceptionHandler
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinWorkerThread
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-import scala.collection.parallel.TaskSupport
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.concurrent.forkjoin.ForkJoinPool
-import scala.concurrent.forkjoin.ForkJoinWorkerThread
 
 import org.slf4j.LoggerFactory
 
@@ -37,10 +36,6 @@ class ThreadUtils
 object ThreadUtils {
     private val logger = LoggerFactory.getLogger(classOf[ThreadUtils])
 
-    private class MyForkJoinWorkerThread(prefix:String, pool:ForkJoinPool) extends ForkJoinWorkerThread(pool) { // set the correct classloader here
-        setContextClassLoader(Thread.currentThread.getContextClassLoader)
-        setName(prefix + "-" + super.getName)
-    }
     private class MyWorkerThread(prefix:String, runnable:Runnable) extends Thread(runnable) {
         setContextClassLoader(Thread.currentThread.getContextClassLoader)
         setName(prefix + "-" + super.getName)
@@ -59,7 +54,11 @@ object ThreadUtils {
     def newForkJoinPool(prefix:String, maxThreadNumber:Int): ForkJoinPool = {
         val factory = new ForkJoinPool.ForkJoinWorkerThreadFactory {
             override final def newThread(pool: ForkJoinPool) = {
-                new MyForkJoinWorkerThread(prefix, pool)
+                val thread = new ForkJoinWorkerThread(pool) {
+                    setContextClassLoader(Thread.currentThread.getContextClassLoader)
+                    setName(prefix + "-" + getName)
+                }
+                thread
             }
         }
         new ForkJoinPool(
@@ -117,23 +116,4 @@ object ThreadUtils {
         }
     }
 
-    /**
-     * Performs a parallel `map` operation by using Scala parallel collections.
-     * @param seq
-     * @param f
-     * @param taskSupport
-     * @tparam S
-     * @tparam T
-     * @return
-     */
-    def parmap[S, T](seq: Seq[S])(f: S => T)(implicit taskSupport: TaskSupport): Seq[T] = {
-        if (taskSupport != null && seq.length > 1) {
-            val pseq = seq.par
-            pseq.tasksupport = taskSupport
-            pseq.map(f).seq
-        }
-        else {
-            seq.map(f)
-        }
-    }
 }

@@ -26,9 +26,11 @@ import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
 import org.apache.spark.paths.SparkPath
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.ViewType
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
@@ -39,6 +41,7 @@ import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.GroupingSets
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
@@ -47,6 +50,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.util.BadRecordException
 import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.execution.ExtendedMode
+import org.apache.spark.sql.execution.LogicalRDD
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.SimpleMode
@@ -132,6 +136,10 @@ object SparkShim {
         SQLExecution.withNewExecutionId(queryExecution, name)(body)
 
     def functionRegistry(spark:SparkSession) : FunctionRegistry = spark.sessionState.functionRegistry
+
+    def registerFunction(spark:SparkSession, name:org.apache.spark.sql.catalyst.FunctionIdentifier, info:org.apache.spark.sql.catalyst.expressions.ExpressionInfo, builder:org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder) : Unit = {
+        functionRegistry(spark).registerFunction(name, info, builder)
+    }
 
     def newCreateViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
         CreateViewCommand(table, Nil, None, Map(), Some(select), plan, allowExisting, replace, SparkShim.PersistedView, isAnalyzed=true)
@@ -268,6 +276,9 @@ object SparkShim {
         Column(Alias(col.expr, alias)(explicitMetadata = Some(metadata), nonInheritableMetadataKeys = nonInheritableMetadataKeys))
     }
 
+    def expr(col: Column): Expression = col.expr
+    def column(expression: Expression): Column = Column(expression)
+
     def observe[T](ds:Dataset[T], name: String, expr: Column, exprs: Column*) : Dataset[T] = {
         ds.observe(name, expr, exprs:_*)
     }
@@ -302,6 +313,33 @@ object SparkShim {
                 logger.warn("Found wrong child type in EagerCache.")
                 None
         }
+    }
+
+    def logicalRDD(output: Seq[AttributeReference], rdd: RDD[InternalRow], isStreaming: Boolean, spark: SparkSession): LogicalRDD = {
+        LogicalRDD(output, rdd, isStreaming = isStreaming)(spark)
+    }
+
+    private def streamingClass(name: String): Class[_] = {
+        try {
+            Class.forName(s"org.apache.spark.sql.execution.streaming.runtime.$name")
+        }
+        catch {
+            case _: ClassNotFoundException => Class.forName(s"org.apache.spark.sql.execution.streaming.$name")
+        }
+    }
+
+    def longOffset(offset: Long): org.apache.spark.sql.execution.streaming.Offset = {
+        val module = streamingClass("LongOffset$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", java.lang.Long.TYPE)
+            .invoke(module, Long.box(offset))
+            .asInstanceOf[org.apache.spark.sql.execution.streaming.Offset]
+    }
+
+    def streamingExecutionRelation(source: org.apache.spark.sql.execution.streaming.Source, spark: SparkSession): LogicalPlan = {
+        val module = streamingClass("StreamingExecutionRelation$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", classOf[org.apache.spark.sql.execution.streaming.Source], classOf[SparkSession])
+            .invoke(module, source, spark)
+            .asInstanceOf[LogicalPlan]
     }
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView

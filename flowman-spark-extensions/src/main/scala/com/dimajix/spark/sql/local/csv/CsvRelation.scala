@@ -98,6 +98,7 @@ class CsvRelation(context: SQLContext, files:Seq[Path], options:CsvOptions, msch
         Files.list(file)
             .collect(Collectors.toList[Path])
             .asScala
+            .toSeq
             .flatMap { f =>
                 if (Files.isRegularFile(f))
                     readFile(f)

@@ -18,14 +18,14 @@ package org.apache.spark.sql.catalyst.plans.logical
 
 
 object With {
-    def unapply(p: LogicalPlan) : Option[(LogicalPlan, Seq[(String, SubqueryAlias)])] = {
+    def unapply(p: LogicalPlan) : Option[(LogicalPlan, Seq[(String, SubqueryAlias)], Boolean)] = {
         p match {
-            case UnresolvedWith(child, cteRelations) => Some((child, cteRelations))
+            case UnresolvedWith(child, cteRelations) => Some((child, cteRelations, false))
             case _ => None
         }
     }
 
-    def apply(child:LogicalPlan, cteRelations:Seq[(String, SubqueryAlias)]) : UnresolvedWith = {
+    def apply(child:LogicalPlan, cteRelations:Seq[(String, SubqueryAlias)], allowRecursion:Boolean) : UnresolvedWith = {
         UnresolvedWith(child, cteRelations)
     }
 }

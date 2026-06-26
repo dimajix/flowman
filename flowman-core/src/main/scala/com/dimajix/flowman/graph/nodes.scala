@@ -50,13 +50,13 @@ sealed abstract class Node {
      * List of incoming edges, i.e. the upstream nodes which provide input data
      * @return
      */
-    def incoming : Seq[Edge] = inEdges
+    def incoming : Seq[Edge] = inEdges.toSeq
 
     /**
      * List of outgoing edges, i.e. downstream nodes which receive data from this node
      * @return
      */
-    def outgoing : Seq[Edge] = outEdges
+    def outgoing : Seq[Edge] = outEdges.toSeq
 
     /**
      * Returns upstream resources

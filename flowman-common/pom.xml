@@ -25,8 +25,131 @@
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src/main/scala-${scala.api_version}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-site-source</id>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src/main/scala-${scala.api_version}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>default-scala-2.13</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <!--
+                    We can only include scala-parallel-collections for scala 2.13 other
+                    Otherwise it will break the build for scala 2.12
+                -->
+                <dependency>
+                    <groupId>org.scala-lang.modules</groupId>
+                    <artifactId>scala-parallel-collections_2.13</artifactId>
+                    <version>1.2.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>spark-3.0</id>
+        </profile>
+        <profile>
+            <id>spark-3.1</id>
+        </profile>
+        <profile>
+            <id>spark-3.2</id>
+        </profile>
+        <profile>
+            <id>spark-3.3</id>
+        </profile>
+        <profile>
+            <id>spark-3.4</id>
+        </profile>
+        <profile>
+            <id>spark-3.5</id>
+        </profile>
+        <profile>
+            <id>spark-4.0</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.scala-lang.modules</groupId>
+                    <artifactId>scala-parallel-collections_2.13</artifactId>
+                    <version>1.2.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>spark-4.1</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.scala-lang.modules</groupId>
+                    <artifactId>scala-parallel-collections_2.13</artifactId>
+                    <version>1.2.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>spark-4.2</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.scala-lang.modules</groupId>
+                    <artifactId>scala-parallel-collections_2.13</artifactId>
+                    <version>1.2.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>scala-2.13</id>
+            <activation>
+                <property>
+                    <name>scala.api_version</name>
+                    <value>2.13</value>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.scala-lang.modules</groupId>
+                    <artifactId>scala-parallel-collections_2.13</artifactId>
+                    <version>1.2.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>scala-2.12</id>
+            <activation>
+                <property>
+                    <name>scala.api_version</name>
+                    <value>2.12</value>
+                </property>
+            </activation>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -41,6 +164,11 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-reflect</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-collection-compat_${scala.api_version}</artifactId>
         </dependency>
 
         <dependency>
@@ -85,4 +213,3 @@
         </dependency>
     </dependencies>
 </project>
-

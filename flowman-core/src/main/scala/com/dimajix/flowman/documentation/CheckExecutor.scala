@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.documentation
 
-import scala.collection.parallel.TaskSupport
-import scala.collection.parallel.ThreadPoolTaskSupport
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.DataFrame
@@ -126,26 +124,22 @@ class CheckExecutor(execution: Execution) {
 
     private def runAllChecks(context:Context, df:DataFrame, schema:SchemaDoc) : SchemaDoc = {
         val parallelism = context.flowmanConf.getConf(FlowmanConf.EXECUTION_CHECK_PARALLELISM)
-        val pool = if (parallelism > 1 ) ThreadUtils.newExecutor("documenter", parallelism) else null
-        // github-382: A ForkJoinPool could possibly run too many checks in parallel
-        implicit val ts: TaskSupport = if (pool != null) new ThreadPoolTaskSupport(pool) else null
         // Get current Spark JobGroup and JobDescription to pass to other threads
         implicit val jobGroup: (String, String) = SparkUtils.getJobGroup(execution.spark.sparkContext)
 
         try {
-            val columnChecks = runColumnChecks(context, df, schema.columns)
-            val schemaChecks = runSchemaChecks(context, df, schema)
+            val columnChecks = runColumnChecks(context, df, schema.columns, parallelism)
+            val schemaChecks = runSchemaChecks(context, df, schema, parallelism)
             schemaChecks.copy(columns = columnChecks)
-        }
-        finally {
-            if (pool != null) {
-                pool.shutdown()
-            }
+        } catch {
+            case NonFatal(ex) =>
+                logger.warn(yellow(s"Error executing checks:\n  ${reasons(ex)}"))
+                failAllChecks(schema)
         }
     }
 
-    private def runSchemaChecks(context:Context, df:DataFrame, schema:SchemaDoc)(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : SchemaDoc = {
-        val tests = ThreadUtils.parmap(schema.checks) { test =>
+    private def runSchemaChecks(context:Context, df:DataFrame, schema:SchemaDoc, parallelism:Int)(implicit jobGroup:(String,String)) : SchemaDoc = {
+        val tests = ThreadUtils.parmap(schema.checks, "schema-checks", parallelism) { test =>
             withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
                 runSchemaCheck(context, df, test)
             }
@@ -173,22 +167,20 @@ class CheckExecutor(execution: Execution) {
         test.withResult(result)
     }
 
-    private def runColumnChecks(context:Context, df:DataFrame, columns:Seq[ColumnDoc], path:String = "")(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : Seq[ColumnDoc] = {
-        ThreadUtils.parmap(columns) { col =>
-            withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
-                runColumnChecks(context, df, col, path)
-            }
+    private def runColumnChecks(context:Context, df:DataFrame, columns:Seq[ColumnDoc], parallelism:Int, path:String = "")(implicit jobGroup:(String,String)) : Seq[ColumnDoc] = {
+        ThreadUtils.parmap(columns, "column-checks", parallelism) { col =>
+            runColumnChecks(context, df, col, parallelism, path)
         }
     }
-    private def runColumnChecks(context:Context, df:DataFrame, column:ColumnDoc, path:String)(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : ColumnDoc = {
+    private def runColumnChecks(context:Context, df:DataFrame, column:ColumnDoc, parallelism:Int, path:String)(implicit jobGroup:(String,String)) : ColumnDoc = {
         val columnPath = path + column.name
-        val tests = ThreadUtils.parmap(column.checks) { test =>
+        val tests = ThreadUtils.parmap(column.checks, "column-tests", parallelism) { test =>
             withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
                 runColumnCheck(context, df, test, columnPath)
             }
         }
 
-        val children = runColumnChecks(context, df, column.children, path + column.name + ".")
+        val children = runColumnChecks(context, df, column.children, parallelism, path + column.name + ".")
         column.copy(children=children, checks=tests)
     }
     private def runColumnCheck(context:Context, df:DataFrame, test:ColumnCheck, columnPath:String) : ColumnCheck = {

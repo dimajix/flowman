@@ -95,10 +95,10 @@ object Graph {
          * @return
          */
         def build() : Graph = {
-            Graph(
-                nodes.values.toList,
-                edges
-            )
+        Graph(
+            nodes.values.toList,
+            edges.toSeq
+        )
         }
 
         private def nextNodeId() : Int = {
@@ -249,8 +249,8 @@ sealed abstract class Node {
     def identifier : Identifier[_]
     def project : String = identifier.project.getOrElse("")
     def name : String = identifier.name
-    def incoming: Seq[Edge] = _incoming
-    def outgoing: Seq[Edge] = _outgoing
+    def incoming: Seq[Edge] = _incoming.toSeq
+    def outgoing: Seq[Edge] = _outgoing.toSeq
 
     def provides: Seq[ResourceIdentifier]
     def requires: Seq[ResourceIdentifier]

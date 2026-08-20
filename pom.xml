@@ -116,7 +116,7 @@
         <ivy.version>2.5.1</ivy.version>
         <jackson.version>2.15.2</jackson.version>
         <jackson-api.version>2.15</jackson-api.version>
-        <jackson-databind.version>2.15.2</jackson-databind.version>
+        <jackson-databind.version>2.18.9</jackson-databind.version>
         <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
         <jackson-jaxb.scope>compile</jackson-jaxb.scope>
         <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>

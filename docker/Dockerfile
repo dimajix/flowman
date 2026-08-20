@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11-jdk AS build
+FROM eclipse-temurin:17-jdk AS build
 MAINTAINER k.kupferschmidt@dimajix.de
 
 ARG DIST_FILE

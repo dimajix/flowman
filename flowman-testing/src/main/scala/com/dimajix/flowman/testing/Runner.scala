@@ -22,6 +22,7 @@ import java.net.URL
 import java.util.UUID
 
 import scala.collection.JavaConverters._
+import com.dimajix.common.ParallelCompat._
 
 import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.hive.conf.HiveConf
@@ -288,7 +289,7 @@ class Runner private(
      * @return
      */
     def runJob(jobName:String, phases:java.util.List[Phase], args:java.util.Map[String,String]) : Boolean = {
-        runJob(jobName, phases.asScala, args.asScala.toMap)
+        runJob(jobName, phases.asScala.toSeq, args.asScala.toMap)
     }
 
 

@@ -19,6 +19,8 @@ package com.dimajix.flowman.types
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.spark.SPARK_VERSION_MAJOR
+import com.dimajix.spark.SPARK_VERSION_MINOR
 import com.dimajix.flowman.types.RecordTest.RecordListWrapper
 import com.dimajix.flowman.util.ObjectMapper
 
@@ -125,7 +127,10 @@ class RecordTest extends AnyFlatSpec with Matchers {
             """.stripMargin
 
         val result = ObjectMapper.parse[RecordListWrapper](spec)
-        result.records should be (null)
+        if (SPARK_VERSION_MAJOR > 4 || SPARK_VERSION_MINOR >= 1)
+            result.records should be (Seq())
+        else
+            result.records should be (null)
     }
 
     it should "be deserializable from an singleton list with a value" in {

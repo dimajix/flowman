@@ -184,7 +184,7 @@
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
-            <version>${pure.commons-validator.version}</version>
+            <version>${commons-validator.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

@@ -58,6 +58,40 @@ class RelationMappingTest extends AnyFlatSpec with Matchers {
         session.shutdown()
     }
 
+    it should "evaluate partition expressions lazily" in {
+        val spec =
+            """
+              |mappings:
+              |  t0:
+              |    kind: relation
+              |    relation: some_relation
+              |    columns:
+              |      id: string
+              |    partitions:
+              |      datetime:
+              |        start: "${start_time}"
+              |        end: "${end_time}"
+              |      known: "${known_partition}"
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder()
+            .withProject(project)
+            .withEnvironment("known_partition", "value")
+            .disableSpark()
+            .build()
+        val context = session.getContext(project)
+
+        // Instantiating a mapping must not evaluate unused partition expressions.
+        val mapping = context.getMapping(MappingIdentifier("t0")).asInstanceOf[RelationMapping]
+        mapping.columns.map(_.name) should be (Seq("id"))
+
+        // Accessing one partition must evaluate only that partition, not the whole map.
+        mapping.partitions("known") should be (SingleValue("value"))
+
+        session.shutdown()
+    }
+
     it should "support embedded relations" in {
         val spec =
             """

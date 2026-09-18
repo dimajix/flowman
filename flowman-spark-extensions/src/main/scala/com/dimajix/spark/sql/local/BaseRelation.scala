@@ -27,5 +27,5 @@ abstract class BaseRelation {
     def schema: StructType
 
     def read(): DataFrame
-    def write(df:DataFrame, mode:SaveMode)
+    def write(df:DataFrame, mode:SaveMode): Unit
 }

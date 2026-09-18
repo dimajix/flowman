@@ -17,4 +17,3 @@ connections:
 plugins:
   - flowman-mariadb
   - flowman-mysql
-  - flowman-mssqlserver

@@ -101,7 +101,7 @@ object OpenApiSchemaUtils {
     def fromOpenApi(model:Schema[_], nullable:Boolean) : Seq[Field] = {
         def fromOpenApiRec(model:Schema[_], nullable:Boolean=true) : Seq[Field] = {
             model match {
-                case composed: ComposedSchema => composed.getAllOf.asScala.flatMap(m => fromOpenApiRec(m, nullable))
+                case composed: ComposedSchema => composed.getAllOf.asScala.toSeq.flatMap(m => fromOpenApiRec(m, nullable))
                 //case array:ArrayModel => Seq(fromSwaggerProperty(array.getItems))
                 case _ => fromOpenApiObject(model.getProperties.asScala.toSeq, "", Option(model.getRequired).toSeq.flatMap(_.asScala).toSet, nullable).fields
             }
@@ -192,7 +192,7 @@ object OpenApiSchemaUtils {
                     case (_,_) => StringType
                 }
             case _:UUIDSchema => StringType
-            case c:ComposedSchema => StructType(c.getAllOf.asScala.flatMap(s => fromOpenApiType(s, fqName + ".", nullable).asInstanceOf[StructType].fields))
+            case c:ComposedSchema => StructType(c.getAllOf.asScala.toSeq.flatMap(s => fromOpenApiType(s, fqName + ".", nullable).asInstanceOf[StructType].fields))
             case obj:ObjectSchema => fromOpenApiObject(obj.getProperties.asScala.toSeq, fqName + ".", required(obj), nullable)
             case s:Schema[_] if s.getEnum != null => StringType // enums
             case s:Schema[_] if s.getProperties != null => fromOpenApiObject(s.getProperties.asScala.toSeq, fqName + ".", required(s), nullable)

@@ -73,7 +73,7 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
         results.size should be (1)
 
         val result = results("main").orderBy("_1", "_2")
-        val rows = result.as[(Int,Int)]collect()
+        val rows = result.as[(Int,Int)].collect()
         rows should be (Seq(
             (1,2),
             (1,2),
@@ -104,7 +104,7 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
         results.size should be (1)
 
         val result = results("main").orderBy("_1", "_2")
-        val rows = result.as[(Int,Int)]collect()
+        val rows = result.as[(Int,Int)].collect()
         rows should be (Seq(
             (1,2),
             (2,3),

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.assertion
 
+import com.dimajix.common.ParallelCompat._
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.spark.sql.DataFrame

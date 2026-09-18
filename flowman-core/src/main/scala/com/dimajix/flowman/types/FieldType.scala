@@ -85,8 +85,8 @@ object FieldType {
             case org.apache.spark.sql.types.ByteType => ByteType
             case org.apache.spark.sql.types.BinaryType => BinaryType
             case org.apache.spark.sql.types.BooleanType => BooleanType
-            case org.apache.spark.sql.types.CharType(n) => CharType(n)
-            case org.apache.spark.sql.types.VarcharType(n) => VarcharType(n)
+            case charType:org.apache.spark.sql.types.CharType => CharType(charType.length)
+            case varcharType:org.apache.spark.sql.types.VarcharType => VarcharType(varcharType.length)
             case org.apache.spark.sql.types.TimestampType => TimestampType
             case org.apache.spark.sql.types.DateType => DateType
             case org.apache.spark.sql.types.CalendarIntervalType => CalendarIntervalType

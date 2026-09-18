@@ -98,8 +98,8 @@ object PlanUtils {
             override def apply(plan: LogicalPlan): LogicalPlan = plan transformDown {
                 case relation: UnresolvedRelation =>
                     replacements.getOrElse(relation.tableName, relation)
-                case With(child, ctes) =>
-                    With(child, ctes.map { case(k,v) => k -> v.copy(child = apply(v.child)) })
+                case With(child, ctes, allowRecursion) =>
+                    With(child, ctes.map { case(k,v) => k -> v.copy(child = apply(v.child)) }, allowRecursion)
             }
         }
 

@@ -21,6 +21,7 @@ import java.time.Duration
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.delta.DeltaLog
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.col
@@ -193,11 +194,12 @@ case class DeltaVacuumTarget(
                     .reduce(_ && _)
 
             val partitionString = partition.toSeq.zip(partitionColumns).map(kv => kv._2 + "=" + kv._1.toString).mkString(",")
+            val partitionFilterSql = SparkShim.expr(partitionFilter).sql
             logger.info(s"Compacting Delta relation '${relation.identifier}' for partition ${partitionString}")
             val df = deltaTable.toDF
-                .where(partitionFilter.expr.sql)
+                .where(partitionFilterSql)
                 .repartition(minFiles)
-            writeTable(df, Some(partitionFilter.expr.sql))
+            writeTable(df, Some(partitionFilterSql))
         }
     }
 }

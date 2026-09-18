@@ -91,7 +91,6 @@ plugins:
   - flowman-kafka
   - flowman-mariadb
   - flowman-mysql
-  - flowman-mssqlserver
   - flowman-oracle
   - flowman-postgresql
   - flowman-sftp
@@ -99,7 +98,7 @@ plugins:
   - flowman-trino
   - flowman-openapi
   - flowman-json
-  - flowman-delta
+  @flowman.plugin.delta@
 
 
 # The 'store' defines how Flowman can reference entities in different projects.

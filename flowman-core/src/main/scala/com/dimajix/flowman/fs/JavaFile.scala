@@ -154,12 +154,14 @@ final case class JavaFile(jpath:Path) extends File {
         .asScala
         .sortBy(_.toString)
         .map(new JavaFile(_))
+        .map(_.asInstanceOf[File])
+        .toSeq
 
     override def glob(pattern: String): Seq[File] = {
         if (pattern == "*") {
             val stream = Files.newDirectoryStream(jpath)
             try {
-                stream.asScala.map(new JavaFile(_)).toList
+                stream.asScala.map(new JavaFile(_)).toSeq
             }
             finally {
                 stream.close()
@@ -176,7 +178,7 @@ final case class JavaFile(jpath:Path) extends File {
                     FileVisitResult.CONTINUE
                 }
             })
-            filePaths.toList
+            filePaths.toSeq
         }
     }
 

@@ -50,11 +50,10 @@ plugins:
   - flowman-avro
   - flowman-aws
   - flowman-azure
-  - flowman-delta
+  @flowman.plugin.delta@
   - flowman-kafka
   - flowman-mariadb
   - flowman-mysql
-  - flowman-mssqlserver
   - flowman-oracle
   - flowman-postgresql
   - flowman-swagger

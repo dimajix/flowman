@@ -1,0 +1,401 @@
+/*
+ * Copyright (C) 2018 The Flowman Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.spark.sql
+
+import java.sql.Connection
+import java.time.Instant
+import java.time.LocalDateTime
+import java.util.TimeZone
+import org.apache.hadoop.fs.Path
+import org.apache.spark.SparkConf
+import org.apache.spark.deploy.SparkHadoopUtil
+import org.apache.spark.internal.config.ConfigEntry
+import org.apache.spark.paths.SparkPath
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
+import org.apache.spark.sql.catalyst.analysis.UnresolvedFunction
+import org.apache.spark.sql.catalyst.analysis.ViewType
+import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
+import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
+import org.apache.spark.sql.catalyst.catalog.SessionCatalog
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.And
+import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.catalyst.expressions.EqualNullSafe
+import org.apache.spark.sql.catalyst.expressions.EqualTo
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.GreaterThan
+import org.apache.spark.sql.catalyst.expressions.GreaterThanOrEqual
+import org.apache.spark.sql.catalyst.expressions.GroupingSets
+import org.apache.spark.sql.catalyst.expressions.LessThan
+import org.apache.spark.sql.catalyst.expressions.LessThanOrEqual
+import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.expressions.Not
+import org.apache.spark.sql.catalyst.expressions.Or
+import org.apache.spark.sql.catalyst.plans.logical.Aggregate
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.util.BadRecordException
+import org.apache.spark.sql.catalyst.util.IntervalUtils
+import org.apache.spark.sql.execution.ExtendedMode
+import org.apache.spark.sql.execution.LogicalRDD
+import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.execution.SQLExecution
+import org.apache.spark.sql.execution.SimpleMode
+import org.apache.spark.sql.execution.adaptive.LogicalQueryStage
+import org.apache.spark.sql.execution.columnar.InMemoryRelation
+import org.apache.spark.sql.execution.command.AlterViewAsCommand
+import org.apache.spark.sql.execution.command.CreateDatabaseCommand
+import org.apache.spark.sql.execution.command.CreateViewCommand
+import org.apache.spark.sql.execution.datasources.DataSource
+import org.apache.spark.sql.execution.datasources.FileFormat
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
+import org.apache.spark.sql.execution.datasources.v2.FileDataSourceV2
+import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
+import org.apache.spark.sql.internal.SQLConf
+import org.apache.spark.sql.jdbc.JdbcDialect
+import org.apache.spark.sql.sources.RelationProvider
+import org.apache.spark.sql.sources.SchemaRelationProvider
+import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.unsafe.types.CalendarInterval
+import org.apache.spark.unsafe.types.UTF8String
+import org.slf4j.LoggerFactory
+import com.dimajix.util.DateTimeUtils
+import com.dimajix.util.Reflection
+import org.apache.spark.sql.classic.ClassicConversions
+import org.apache.spark.sql.classic.ColumnConversions.toRichColumn
+import org.apache.spark.sql.classic.{SparkSession => ClassicSparkSession}
+
+
+class SparkShim
+object SparkShim {
+    private val logger = LoggerFactory.getLogger(classOf[SparkShim])
+    private val ColumnHelper = ClassicConversions.ColumnConstructorExt(Column)
+
+    def getHadoopConf(sparkConf:SparkConf) :org.apache.hadoop.conf.Configuration = SparkHadoopUtil.get.newConfiguration(sparkConf)
+
+    def parseCalendarInterval(str:String) : CalendarInterval = IntervalUtils.stringToInterval(UTF8String.fromString(str))
+
+    def calendarInterval(months:Int, days:Int, microseconds:Long=0L) : CalendarInterval = {
+        new CalendarInterval(months, days, microseconds)
+    }
+
+    def millisToDays(millisUtc: Long, timeZone: TimeZone): Int = {
+        val secs = Math.floorDiv(millisUtc, DateTimeUtils.MILLIS_PER_SECOND)
+        val mos = Math.floorMod(millisUtc, DateTimeUtils.MILLIS_PER_SECOND)
+        val instant = Instant.ofEpochSecond(secs, mos * DateTimeUtils.NANOS_PER_MILLIS)
+        Math.toIntExact(LocalDateTime.ofInstant(instant, timeZone.toZoneId()).toLocalDate.toEpochDay)
+    }
+
+    def isStaticConf(key:String) : Boolean = {
+        SQLConf.isStaticConfigKey(key) || (ConfigEntry.findEntry(key) != null && !SQLConf.containsConfigKey(key))
+    }
+
+    def relationSupportsMultiplePaths(spark:SparkSession, format:String) : Boolean = {
+        val providingClass = DataSource.lookupDataSource(format, spark.sessionState.conf)
+        relationSupportsMultiplePaths(providingClass)
+    }
+
+    def relationSupportsMultiplePaths(providingClass:Class[_]) : Boolean = {
+        providingClass.getDeclaredConstructor().newInstance() match {
+            case _: RelationProvider => false
+            case _: SchemaRelationProvider => false
+            case _: FileFormat => true
+            case _: FileDataSourceV2 => true
+            case _ => false
+        }
+    }
+
+    def groupingSetAggregate(
+        groupByExpressions:Seq[Expression],
+        groupingSets:Seq[Seq[Expression]],
+        aggregateExpressions: Seq[NamedExpression],
+        child: LogicalPlan) : LogicalPlan = {
+        Aggregate(
+            Seq(GroupingSets(groupingSets, groupByExpressions)),
+            aggregateExpressions,
+            child
+        )
+    }
+
+    def withNewExecutionId[T](
+        sparkSession: SparkSession,
+        queryExecution: QueryExecution,
+        name: Option[String] = None)(body: => T): T =
+        SQLExecution.withNewExecutionId(queryExecution, name)(body)
+
+    def functionRegistry(spark:SparkSession) : FunctionRegistry = spark.sessionState.functionRegistry
+
+    def registerFunction(spark:SparkSession, name:org.apache.spark.sql.catalyst.FunctionIdentifier, info:org.apache.spark.sql.catalyst.expressions.ExpressionInfo, builder:org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder) : Unit = {
+        val registry = functionRegistry(spark)
+        try {
+            registry.registerFunction(name, info, builder)
+        }
+        catch {
+            case e:AssertionError if Option(e.getMessage).exists(_.contains("Function identifier must be fully qualified")) =>
+                registry.registerFunction(
+                    org.apache.spark.sql.catalyst.FunctionIdentifier(name.funcName, Some("session"), Some("system")),
+                    info,
+                    builder
+                )
+        }
+    }
+
+    def newCreateViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
+        CreateViewCommand(
+            name = table,
+            userSpecifiedColumns = Nil,
+            comment = None,
+            collation = None,
+            properties = Map(),
+            originalText = Some(select),
+            plan = plan,
+            allowExisting = allowExisting,
+            replace = replace,
+            viewType = SparkShim.PersistedView,
+            isAnalyzed = true,
+            referredTempFunctions = Seq.empty
+        )
+    }
+    def newAlterViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
+        AlterViewAsCommand(table, select, plan, isAnalyzed=true)
+    }
+    def newCreateDatabaseCommand(database:String, catalog:String, path:Option[String], comment:Option[String], ignoreIfExists:Boolean) : CreateDatabaseCommand = {
+        try {
+            CreateDatabaseCommand(database, ignoreIfExists, path, comment, Map())
+        }
+        catch {
+            case _:NoSuchMethodError | _:NoSuchMethodException =>
+                logger.warn("Falling back to reflection for CreateDatabaseCommand::new. This is an indication that you are using forked Spark libraries.")
+                Reflection.construct(classOf[CreateDatabaseCommand], Map(
+                    "databaseName" -> database,
+                    "catalog" -> catalog,
+                    "ifNotExists" -> ignoreIfExists,
+                    "path" -> path,
+                    "comment" -> comment)
+                )
+        }
+    }
+    def newInsertIntoHiveTable(
+        table: CatalogTable,
+        partition: Map[String, Option[String]],
+        query: LogicalPlan,
+        overwrite: Boolean,
+        ifPartitionNotExists: Boolean,
+        outputColumnNames: Seq[String]): InsertIntoHiveTable = {
+        try {
+            InsertIntoHiveTable(
+                table, partition, query, overwrite, ifPartitionNotExists, outputColumnNames
+            )
+        }
+        catch {
+            case _: NoSuchMethodError | _: NoSuchMethodException =>
+                logger.warn("Falling back to reflection for InsertIntoHiveTable::new. This is an indication that you are using forked Spark libraries.")
+                Reflection.construct(classOf[InsertIntoHiveTable], Map(
+                    "table" -> table,
+                    "partition" -> partition,
+                    "query" -> query,
+                    "overwrite" -> overwrite,
+                    "ifPartitionNotExists" -> ifPartitionNotExists,
+                    "outputColumnNames" -> outputColumnNames
+                ))
+        }
+    }
+    def newCatalogTable(
+        identifier: TableIdentifier,
+        tableType: CatalogTableType,
+        storage: CatalogStorageFormat,
+        schema: StructType,
+        provider: Option[String] = None,
+        partitionColumnNames: Seq[String] = Seq.empty,
+        bucketSpec: Option[BucketSpec] = None,
+        properties: Map[String, String] = Map.empty,
+        comment: Option[String] = None) : CatalogTable = {
+        try {
+            CatalogTable(
+                identifier = identifier,
+                tableType = tableType,
+                storage = storage,
+                schema = schema,
+                provider = provider,
+                partitionColumnNames = partitionColumnNames,
+                bucketSpec = bucketSpec,
+                properties = properties,
+                comment = comment
+            )
+        }
+        catch {
+            case _:NoSuchMethodError | _:NoSuchMethodException =>
+                logger.warn("Falling back to reflection for CatalogTable::new. This is an indication that you are using forked Spark libraries.")
+                Reflection.construct(classOf[CatalogTable], Map(
+                    "identifier" -> identifier,
+                    "tableType" -> tableType,
+                    "storage" -> storage,
+                    "schema" -> schema,
+                    "provider" -> provider,
+                    "partitionColumnNames" -> partitionColumnNames,
+                    "bucketSpec" -> bucketSpec,
+                    "createTime" -> System.currentTimeMillis,
+                    "lastAccessTime" -> -1L,
+                    "properties" -> properties,
+                    "comment" -> comment,
+                    "tracksPartitionsInCatalog" -> false,
+                    "schemaPreservesCase" -> true
+                ))
+        }
+    }
+    def withNewSchema(table:CatalogTable, schema:StructType) : CatalogTable = {
+        try {
+            table.copy(schema = schema)
+        }
+        catch {
+            case _: NoSuchMethodError | _: NoSuchMethodException =>
+                logger.warn("Falling back to reflection for CatalogTable::copy. This is an indication that you are using forked Spark libraries.")
+                Reflection.copy(table, Map("schema" -> schema))
+        }
+    }
+
+    def listPartitions(catalog:SessionCatalog, tableName: TableIdentifier, partialSpec: Option[TablePartitionSpec] = None) : Seq[CatalogTablePartition] = {
+        try {
+            catalog.listPartitions(tableName, partialSpec)
+        }
+        catch {
+            case _: NoSuchMethodError | _: NoSuchMethodException =>
+                logger.warn("Falling back to reflection for SessionCatalog::listPartitions. This is an indication that you are using forked Spark libraries.")
+                Reflection.invoke(catalog, "listPartitions", classOf[Seq[CatalogTablePartition]], Map(
+                    "tableName" -> tableName,
+                    "partialSpec" -> partialSpec,
+                    "limit" -> 0
+                ))
+        }
+    }
+
+    def createConnectionFactory(dialect: JdbcDialect, options: JDBCOptions) :  Int => Connection = {
+        dialect.createConnectionFactory(options)
+    }
+    def savePartition(
+        table: String,
+        iterator: Iterator[Row],
+        rddSchema: StructType,
+        insertStmt: String,
+        batchSize: Int,
+        dialect: JdbcDialect,
+        isolationLevel: Int,
+        options: JDBCOptions): Unit = {
+        JdbcUtils.savePartition(table, iterator, rddSchema, insertStmt, batchSize, dialect, isolationLevel, options)
+    }
+
+    def alias(col: Column, alias: String, metadata: Metadata, nonInheritableMetadataKeys: Seq[String]): Column = {
+        column(Alias(expr(col), alias)(explicitMetadata = Some(metadata), nonInheritableMetadataKeys = nonInheritableMetadataKeys))
+    }
+
+    def observe[T](ds:Dataset[T], name: String, expr: Column, exprs: Column*) : Dataset[T] = {
+        ds.observe(name, expr, exprs:_*)
+    }
+    def observedMetrics(qe:QueryExecution) : Map[String,Row] = {
+        qe.observedMetrics
+    }
+
+    def toPath(path:SparkPath) : Path = path.toPath
+
+    def rowEncoderFor(schema: StructType) : Encoder[Row] = RowEncoder.encoderFor(schema)
+    def expressionEncoderFor(schema: StructType) : Encoder[Row] = ExpressionEncoder(schema)
+
+    def newBadRecordException(cause: Throwable) : BadRecordException = {
+        throw BadRecordException(
+            () => new UTF8String(),
+            () => Array.empty,
+            cause
+        )
+    }
+
+    def explainString[T](ds:Dataset[T], extended:Boolean) : String = {
+        val mode = if (extended) ExtendedMode else SimpleMode
+        ds.queryExecution.explainString(mode)
+    }
+
+    def extractInMemoryRelation(plan:LogicalPlan) : Option[InMemoryRelation] = {
+        plan match {
+            case c: InMemoryRelation => Some(c)
+            case LogicalQueryStage(c: InMemoryRelation, _) => Some(c)
+            // The next case should not happen
+            case _ =>
+                logger.warn("Found wrong child type in EagerCache.")
+                None
+        }
+    }
+
+    def logicalRDD(output: Seq[AttributeReference], rdd: RDD[InternalRow], isStreaming: Boolean, spark: SparkSession): LogicalRDD = {
+        LogicalRDD(output, rdd, isStreaming = isStreaming)(spark.asInstanceOf[ClassicSparkSession])
+    }
+
+    private def streamingClass(name: String): Class[_] = {
+        try {
+            Class.forName(s"org.apache.spark.sql.execution.streaming.runtime.$name")
+        }
+        catch {
+            case _: ClassNotFoundException => Class.forName(s"org.apache.spark.sql.execution.streaming.$name")
+        }
+    }
+
+    def longOffset(offset: Long): org.apache.spark.sql.execution.streaming.Offset = {
+        val module = streamingClass("LongOffset$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", java.lang.Long.TYPE)
+            .invoke(module, Long.box(offset))
+            .asInstanceOf[org.apache.spark.sql.execution.streaming.Offset]
+    }
+
+    def streamingExecutionRelation(source: org.apache.spark.sql.execution.streaming.Source, spark: SparkSession): LogicalPlan = {
+        val module = streamingClass("StreamingExecutionRelation$").getField("MODULE$").get(null)
+        module.getClass.getMethod("apply", classOf[org.apache.spark.sql.execution.streaming.Source], classOf[SparkSession])
+            .invoke(module, source, spark)
+            .asInstanceOf[LogicalPlan]
+    }
+
+    private def normalizeExpression(expression: Expression): Expression = expression.transformUp {
+        case f: UnresolvedFunction if f.nameParts.length == 1 =>
+            val args = f.arguments
+            f.nameParts.head.toLowerCase match {
+                case "=" if args.length == 2 => EqualTo(args(0), args(1))
+                case "<=>" if args.length == 2 => EqualNullSafe(args(0), args(1))
+                case "<" if args.length == 2 => LessThan(args(0), args(1))
+                case "<=" if args.length == 2 => LessThanOrEqual(args(0), args(1))
+                case ">" if args.length == 2 => GreaterThan(args(0), args(1))
+                case ">=" if args.length == 2 => GreaterThanOrEqual(args(0), args(1))
+                case "and" if args.length == 2 => And(args(0), args(1))
+                case "or" if args.length == 2 => Or(args(0), args(1))
+                case "not" if args.length == 1 => Not(args(0))
+                case _ => f
+            }
+    }
+
+    def expr(col: Column): Expression = normalizeExpression(col.expr)
+    def column(expression: Expression): Column = ColumnHelper(expression)
+
+    val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView
+    val GlobalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.GlobalTempView
+    val PersistedView : ViewType = org.apache.spark.sql.catalyst.analysis.PersistedView
+}

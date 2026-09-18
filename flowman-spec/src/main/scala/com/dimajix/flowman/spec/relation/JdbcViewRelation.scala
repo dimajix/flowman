@@ -370,7 +370,7 @@ final case class JdbcViewRelation(
     private lazy val dependencies : Seq[String] = {
         val parsed = CCJSqlParserUtil.parse(statement)
         val tablesNamesFinder = new TablesNamesFinder()
-        tablesNamesFinder.getTableList(parsed).asScala
+        tablesNamesFinder.getTableList(parsed).asScala.toSeq
     }
 
     private def normalizeViewSql(sql:String) : String = {

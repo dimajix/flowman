@@ -39,9 +39,9 @@ class SessionManager(val rootSession:execution.Session) {
     def list() : Seq[SessionService] = {
         val result = mutable.ListBuffer[SessionService]()
         sessions.synchronized {
-            result.append(sessions:_*)
+            result.appendAll(sessions)
         }
-        result
+        result.toSeq
     }
 
     /**
@@ -90,7 +90,7 @@ class SessionManager(val rootSession:execution.Session) {
 
     def removeClientSessions(clientId:UUID) : Unit = {
         val toBeRemoved = sessions.synchronized {
-            sessions.filter(_.clientId == clientId)
+            sessions.filter(_.clientId == clientId).toSeq
         }
         toBeRemoved.foreach(_.close())
     }
@@ -106,4 +106,3 @@ class SessionManager(val rootSession:execution.Session) {
         }
     }
 }
-

@@ -29,8 +29,8 @@ final class Configuration(userSettings:Map[String,String]) {
             .toMap
 
     private val allSettings = userSettings ++ systemSettings
-    private val flowmanSettings = allSettings.filterKeys(isFlowmanSetting)
-    private val sparkSettings = allSettings.filterKeys(!isFlowmanSetting(_))
+    private val flowmanSettings = allSettings.filterKeys(isFlowmanSetting).toMap
+    private val sparkSettings = allSettings.filterKeys(!isFlowmanSetting(_)).toMap
 
     private def isFlowmanSetting(key:String) : Boolean = key.startsWith("flowman.")
 

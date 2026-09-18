@@ -43,4 +43,35 @@ class IdentityHashSetTest extends AnyFlatSpec with Matchers {
 
         map.empty should be (IdentityHashSet.empty)
     }
+
+    it should "preserve identity semantics when copied" in {
+        val first = SomeClass(3)
+        val second = SomeClass(3)
+        val set = IdentityHashSet[SomeClass]()
+        set.addOne(first)
+        set.addOne(second)
+
+        val cloned = set.clone()
+        cloned.size should be (2)
+        cloned.contains(first) should be (true)
+        cloned.contains(second) should be (true)
+        cloned.contains(SomeClass(3)) should be (false)
+
+        val included = set.incl(SomeClass(4))
+        included.size should be (3)
+        included.contains(SomeClass(3)) should be (false)
+        set.size should be (2)
+
+        val excluded = set.excl(first)
+        excluded.size should be (1)
+        excluded.contains(first) should be (false)
+        excluded.contains(second) should be (true)
+
+        val removed = IdentityHashSet[SomeClass]()
+        removed.addOne(first)
+        val difference = set.diff(removed)
+        difference.size should be (1)
+        difference.contains(first) should be (false)
+        difference.contains(second) should be (true)
+    }
 }

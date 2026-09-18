@@ -176,7 +176,8 @@ final case class SchemaEnforcer(
 
     private def applyType(col:Column, field:StructField) : Column = {
         field.dataType match {
-            case CharType(n) =>
+            case charType: CharType =>
+                val n = charType.length
                 if (pad && truncate)
                     rpad(col.cast(StringType), n, " ")
                 else if (pad)
@@ -186,7 +187,8 @@ final case class SchemaEnforcer(
                     substring(col.cast(StringType), 0, n)
                 else
                     col.cast(StringType)
-            case VarcharType(n) =>
+            case varcharType: VarcharType =>
+                val n = varcharType.length
                 if (truncate)
                     substring(col.cast(StringType), 0, n)
                 else
@@ -282,9 +284,9 @@ final case class SchemaEnforcer(
 
         // Preserve extended string type info
         requiredField.dataType match {
-            case VarcharType(_) if requiredField.dataType != inputField.dataType =>
+            case _: VarcharType if requiredField.dataType != inputField.dataType =>
                 builder.putString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY, requiredField.dataType.catalogString)
-            case CharType(_) if requiredField.dataType != inputField.dataType =>
+            case _: CharType if requiredField.dataType != inputField.dataType =>
                 builder.putString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY, requiredField.dataType.catalogString)
             case _ =>
         }

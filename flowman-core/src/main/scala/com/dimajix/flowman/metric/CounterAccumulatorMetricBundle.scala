@@ -31,13 +31,13 @@ final case class CounterAccumulatorMetricBundle(override val name:String, overri
     }
 
     override def reset() : Unit = {
-        counters.reset
+        counters.reset()
     }
 
     private final case class Gauge(label:String) extends GaugeMetric {
         private val metricLabels = CounterAccumulatorMetricBundle.this.labels.updated(metricKey, label)
 
-        override def value: Double = counters.get(label).getOrElse(0l).toDouble
+        override def value: Double = counters.get(label).getOrElse(0L).toDouble
 
         override def name: String = CounterAccumulatorMetricBundle.this.name
 

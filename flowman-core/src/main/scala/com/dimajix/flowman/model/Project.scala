@@ -19,6 +19,7 @@ package com.dimajix.flowman.model
 import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
+import com.dimajix.common.ParallelCompat._
 import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory

@@ -124,7 +124,7 @@ abstract class ResourceIdentifier extends Product with Serializable {
             else pwr(t.tail, ps ++ (ps map (_ + t.head)))
 
         val ps = pwr(partition.keySet, Set(Set.empty[String])) //Powerset of ∅ is {∅}
-        ps.toSeq.map(keys => withPartition(partition.filterKeys(keys.contains)))
+        ps.toSeq.map(keys => withPartition(partition.filterKeys(keys.contains).toMap))
     }
 
     /**

@@ -45,6 +45,36 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SchemaUtils
 
 
+private final class LazyEvaluatedPartitions(
+    partitions:Map[String,FieldValue],
+    context:Context
+) extends scala.collection.immutable.AbstractMap[String,FieldValue] {
+    private def evaluate(value:FieldValue) : FieldValue = value match {
+        case v: SingleValue => SingleValue(context.evaluate(v.value))
+        case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
+        case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate))
+    }
+
+    override def get(key:String) : Option[FieldValue] = partitions.get(key).map(evaluate)
+
+    override def iterator : Iterator[(String,FieldValue)] = partitions.iterator.map {
+        case (key, value) => key -> evaluate(value)
+    }
+
+    override def removed(key:String) : Map[String,FieldValue] =
+        new LazyEvaluatedPartitions(partitions.removed(key), context)
+
+    override def updated[V1 >: FieldValue](key:String, value:V1) : Map[String,V1] =
+        iterator.toMap.updated(key, value)
+
+    override def knownSize : Int = partitions.knownSize
+
+    override def size : Int = partitions.size
+
+    override def isEmpty : Boolean = partitions.isEmpty
+}
+
+
 final case class RelationMapping(
     instanceProperties:Mapping.Properties,
     relation:Reference[Relation],
@@ -146,11 +176,10 @@ class RelationMappingSpec extends MappingSpec {
       * @return
       */
     override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): RelationMapping = {
-        val partitions= this.partitions.mapValues {
-                case v: SingleValue => SingleValue(context.evaluate(v.value))
-                case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
-                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate))
-            }
+        // Keep partition interpolation lazy. Some consumers, for example schema-only tests with an explicit column
+        // definition, never need the partition values. Scala 2.12's Map.mapValues provided this behaviour, whereas
+        // converting the Scala 2.13 MapView with .toMap evaluates all expressions during mapping instantiation.
+        val partitions = new LazyEvaluatedPartitions(this.partitions, context)
         RelationMapping(
             instanceProperties(context, properties),
             relation.instantiate(context),

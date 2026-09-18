@@ -56,8 +56,8 @@ object SchemaUtils {
 
         def applyType(col:Column, field:StructField) : Column = {
             field.dataType match {
-                case CharType(n) => rpad(col.cast(StringType), n, " ").as(field.name, field.metadata)
-                case VarcharType(n) => substring(col.cast(StringType), 0, n).as(field.name, field.metadata)
+                case charType: CharType => rpad(col.cast(StringType), charType.length, " ").as(field.name, field.metadata)
+                case varcharType: VarcharType => substring(col.cast(StringType), 0, varcharType.length).as(field.name, field.metadata)
                 case _ => col.cast(field.dataType).as(field.name, field.metadata)
             }
         }

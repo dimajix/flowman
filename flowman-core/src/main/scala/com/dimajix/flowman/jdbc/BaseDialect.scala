@@ -25,16 +25,14 @@ import java.sql.SQLTransientException
 import java.sql.Statement
 import java.sql.Timestamp
 import java.util.Locale
-
 import scala.collection.mutable
-
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
-
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
@@ -372,7 +370,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         val targetColumns = targetSchema.toSeq.flatMap(_.names)
         val sqlPlaceholders = sourceColumns.map(_ => "?").mkString(",")
 
-        val sqlMergeCondition = toSql(condition.expr, sourceAlias)
+        val sqlMergeCondition = toSql(SparkShim.expr(condition), sourceAlias)
         val sqlClauses = toSql(sourceColumns, targetColumns, clauses, sourceAlias)
         s"""MERGE INTO ${dialect.quote(targetTable)} $targetAlias
            |USING (VALUES($sqlPlaceholders)) $sourceAlias(${sourceColumns.mkString(",")})
@@ -385,7 +383,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         val sourceColumns = sourceSchema.names
         val targetColumns = targetSchema.toSeq.flatMap(_.names)
 
-        val sqlMergeCondition = toSql(condition.expr, sourceAlias)
+        val sqlMergeCondition = toSql(SparkShim.expr(condition), sourceAlias)
         val sqlClauses = toSql(sourceColumns, targetColumns, clauses, sourceAlias)
         s"""MERGE INTO ${dialect.quote(targetTable)} $targetAlias
            |USING ${dialect.quote(sourceTable)} $sourceAlias
@@ -399,7 +397,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
         def getColumnExpressions(cols:Map[String,Column]) : Seq[(String,String)] = {
             if (cols.nonEmpty) {
-                cols.toSeq.map { case(n,c) => n -> toSql(c.expr, sourceAlias) }
+                cols.toSeq.map { case(n,c) => n -> toSql(SparkShim.expr(c), sourceAlias) }
             }
             else {
                 targetColumns.flatMap(n => sourceColumnNames.get(n).map(c => n -> (sourceAlias + "." + dialect.quoteIdentifier(c))))
@@ -408,18 +406,18 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
         clauses.map {
             case i:InsertClause =>
-                val cond = i.condition.map(c => " AND " + toSql(c.expr, sourceAlias)).getOrElse("")
+                val cond = i.condition.map(c => " AND " + toSql(SparkShim.expr(c), sourceAlias)).getOrElse("")
                 val expressions = getColumnExpressions(i.columns)
                 val columnNames = expressions.map { case(n,_) => dialect.quoteIdentifier(n) }
                 val columnValues = expressions.map { case(_,e) => e }
                 s"WHEN NOT MATCHED$cond THEN INSERT(${columnNames.mkString(",")}) VALUES(${columnValues.mkString(",")})"
             case u:UpdateClause =>
-                val cond = u.condition.map(c => " AND " + toSql(c.expr, sourceAlias)).getOrElse("")
+                val cond = u.condition.map(c => " AND " + toSql(SparkShim.expr(c), sourceAlias)).getOrElse("")
                 val expressions = getColumnExpressions(u.columns)
                 val setters = expressions.map { case(n,c) => s"${dialect.quoteIdentifier(n)} = $c" }
                 s"WHEN MATCHED$cond THEN UPDATE SET ${setters.mkString(", ")}"
             case d:DeleteClause =>
-                val cond = d.condition.map(c => " AND " + toSql(c.expr, sourceAlias)).getOrElse("")
+                val cond = d.condition.map(c => " AND " + toSql(SparkShim.expr(c), sourceAlias)).getOrElse("")
                 s"WHEN MATCHED$cond THEN DELETE"
         }
     }
@@ -582,7 +580,7 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         }
         pkrs.close()
 
-        val cols = pk.sortBy(_._1).map(_._2)
+        val cols = pk.sortBy(_._1).map(_._2).toSeq
         if (cols.nonEmpty)
             Some(PrimaryKey(cols))
         else
@@ -607,7 +605,7 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         }
         idxrs.close()
 
-        idxcols
+        idxcols.toSeq
             .groupBy(_._1).map { case(name,cols) =>
             TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
         }.toSeq

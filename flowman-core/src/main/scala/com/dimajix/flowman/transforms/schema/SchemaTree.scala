@@ -99,7 +99,7 @@ class SchemaNodeOps extends NodeOps[Field] {
   */
 object SchemaTree {
     object implicits {
-        implicit val schemaNodeOps = new SchemaNodeOps
+        implicit val schemaNodeOps:SchemaNodeOps = new SchemaNodeOps
     }
 
     /**

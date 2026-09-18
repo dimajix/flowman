@@ -17,17 +17,14 @@
 package com.dimajix.flowman.transforms.schema
 
 import scala.collection.mutable
-
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Column, SparkShim, functions}
 import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
-import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-
 import com.dimajix.spark.sql.functions.nullable_struct
 
 
@@ -66,9 +63,9 @@ class ColumnNodeOps extends NodeOps[Column] {
     private def withName(name:String, value:Column) : Column = {
         if (name.nonEmpty) {
             // Avoid multiple "as" or otherwise redundant alias expressions, since these will confuse Spark 2.3
-            value.expr match {
+            SparkShim.expr(value) match {
                 case expr:NamedExpression if expr.name == name => value
-                case alias:Alias => new Column(alias.child).as(name)
+                case alias:Alias => SparkShim.column(alias.child).as(name)
                 case _ => value.as(name)
             }
         }
@@ -83,7 +80,7 @@ class ColumnNodeOps extends NodeOps[Column] {
   */
 object ColumnTree {
     object implicits {
-        implicit val columnNodeOps = new ColumnNodeOps
+        implicit val columnNodeOps:ColumnNodeOps = new ColumnNodeOps
     }
 
     /**

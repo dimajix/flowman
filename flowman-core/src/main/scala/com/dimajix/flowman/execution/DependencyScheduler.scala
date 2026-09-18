@@ -121,7 +121,7 @@ class DependencyScheduler(execution: Execution, context: Context) extends Schedu
         @tailrec
         def getCandidates() : Seq[Target] = {
             // Retrieve candidates in order of targets but with empty dependencies
-            val candidates = targets.filter(t => dependencies(t).isEmpty).seq
+            val candidates = targets.filter(t => dependencies(t).isEmpty).toSeq
 
             // Check for cyclic dependencies: No candidates found, but dependencies non-empty and no running targets
             if (candidates.isEmpty && dependencies.nonEmpty && running.isEmpty) {

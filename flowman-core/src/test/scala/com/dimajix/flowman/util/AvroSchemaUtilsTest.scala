@@ -255,13 +255,13 @@ class AvroSchemaUtilsTest extends AnyFlatSpec with Matchers {
               |    "type" : [ {
               |      "type" : "record",
               |      "name" : "AggregatedFields",
-              |      "namespace" : ".AggregatedFields",
+              |      "namespace" : "AggregatedFields",
               |      "fields" : [ {
               |        "name" : "Traveler",
               |        "type" : [ {
               |          "type" : "record",
               |          "name" : "Traveler",
-              |          "namespace" : ".AggregatedFields.Traveler",
+              |          "namespace" : "AggregatedFields.Traveler",
               |          "fields" : [ {
               |            "name" : "Latin",
               |            "type" : [ "string", "null" ]
@@ -289,7 +289,7 @@ class AvroSchemaUtilsTest extends AnyFlatSpec with Matchers {
               |      "items" : [ {
               |        "type" : "record",
               |        "name" : "CommissionPassback",
-              |        "namespace" : ".CommissionPassback",
+              |        "namespace" : "CommissionPassback",
               |        "fields" : [ {
               |          "name" : "Description",
               |          "type" : [ {
@@ -297,7 +297,7 @@ class AvroSchemaUtilsTest extends AnyFlatSpec with Matchers {
               |            "items" : [ {
               |              "type" : "record",
               |              "name" : "Description",
-              |              "namespace" : ".CommissionPassback.Description",
+              |              "namespace" : "CommissionPassback.Description",
               |              "fields" : [ {
               |                "name" : "Latin",
               |                "type" : [ "string", "null" ]
@@ -315,13 +315,13 @@ class AvroSchemaUtilsTest extends AnyFlatSpec with Matchers {
               |          "type" : [ {
               |            "type" : "record",
               |            "name" : "Traveler",
-              |            "namespace" : ".CommissionPassback.Traveler",
+              |            "namespace" : "CommissionPassback.Traveler",
               |            "fields" : [ {
               |              "name" : "FullName",
               |              "type" : [ {
               |                "type" : "record",
               |                "name" : "FullName",
-              |                "namespace" : ".CommissionPassback.Traveler.FullName",
+              |                "namespace" : "CommissionPassback.Traveler.FullName",
               |                "fields" : [ {
               |                  "name" : "Latin",
               |                  "type" : [ "string", "null" ]

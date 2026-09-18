@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.types
 
-import org.codehaus.jackson.annotate.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty
 
 
 object StructType {

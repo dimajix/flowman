@@ -67,7 +67,7 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
         (mapping2.kind _).expects().returns("m2_kind")
         (mapping2.name _).expects().atLeastOnce().returns("m2")
         (mapping2.describe _).expects(*,*).returns(Map("main" -> StructType(Seq.empty)))
-        (mapping2.link _).expects(*).returns(Unit)
+        (mapping2.link _).expects(*).returns(())
 
         val graph = new GraphBuilder(context, Phase.BUILD)
             .addMapping(MappingIdentifier("m1"))

@@ -149,5 +149,5 @@ class KernelServer private(
 
     def isTerminated() : Boolean = server.isTerminated
 
-    def getListenSockets(): Seq[SocketAddress] = server.getListenSockets.asScala
+    def getListenSockets(): Seq[SocketAddress] = server.getListenSockets.asScala.toSeq
 }

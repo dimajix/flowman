@@ -116,7 +116,7 @@ object DeltaUtils {
     def isLoaded(deltaLog:DeltaLog, partition:PartitionSpec) : Boolean = {
         val partitionFilters = partition
             .values
-            .map { case (k, v) => (col(k) === lit(v)).expr }
+            .map { case (k, v) => SparkShim.expr(col(k) === lit(v)) }
             .toSeq
 
         val snapshot = deltaLog.snapshot

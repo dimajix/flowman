@@ -109,7 +109,7 @@ class ParallelExecutor(execution: Execution, context:Context) extends Executor {
                         noMoreWork = true
                 }
             }
-            tasks
+            tasks.toSeq
         }
 
         @tailrec

@@ -17,12 +17,11 @@
 package com.dimajix.spark.sql.execution
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.Strategy
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
-
 import com.dimajix.spark.sql.catalyst.plans.logical.CountRecords
 import com.dimajix.spark.sql.catalyst.plans.logical.EagerCache
+import org.apache.spark.sql.classic.Strategy
 
 
 object ExtraStrategies extends Strategy {

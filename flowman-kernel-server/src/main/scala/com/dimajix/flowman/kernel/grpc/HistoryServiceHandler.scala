@@ -54,7 +54,7 @@ final class HistoryServiceHandler(
         respondTo("findTargets", responseObserver) {
             val history = sessionManager.rootSession.history
             val query = buildQuery(request.getQuery)
-            val order = request.getOrderList.asScala.map(toModel)
+            val order = request.getOrderList.asScala.toSeq.map(toModel)
             val result = history.findTargets(query, order, request.getMaxResults)
 
             val details = result.map { t =>
@@ -84,7 +84,7 @@ final class HistoryServiceHandler(
         respondTo("findJobs", responseObserver) {
             val history = sessionManager.rootSession.history
             val query = buildQuery(request.getQuery)
-            val order = request.getOrderList.asScala.map(toModel)
+            val order = request.getOrderList.asScala.toSeq.map(toModel)
             val result = history.findJobs(query, order, request.getMaxResults)
 
             val details = result.map { t =>
@@ -129,7 +129,7 @@ final class HistoryServiceHandler(
         respondTo("findJobMetrics", responseObserver) {
             val history = sessionManager.rootSession.history
             val query = buildQuery(request.getQuery)
-            val result = history.findJobMetrics(query, request.getGroupingsList.asScala)
+            val result = history.findJobMetrics(query, request.getGroupingsList.asScala.toSeq)
 
             val series = result.map(toProto)
 
@@ -141,14 +141,14 @@ final class HistoryServiceHandler(
 
     private def buildQuery(pquery:TargetHistoryQuery) : TargetQuery = {
         TargetQuery(
-            id = pquery.getIdList.asScala,
-            namespace = pquery.getNamespaceList.asScala,
-            project = pquery.getProjectList.asScala,
-            target = pquery.getTargetList.asScala,
-            status = pquery.getStatusList.asScala.map(toModel),
-            phase = pquery.getPhaseList.asScala.map(toModel),
-            job = pquery.getJobList.asScala,
-            jobId = pquery.getJobIdList.asScala,
+            id = pquery.getIdList.asScala.toSeq,
+            namespace = pquery.getNamespaceList.asScala.toSeq,
+            project = pquery.getProjectList.asScala.toSeq,
+            target = pquery.getTargetList.asScala.toSeq,
+            status = pquery.getStatusList.asScala.toSeq.map(toModel),
+            phase = pquery.getPhaseList.asScala.toSeq.map(toModel),
+            job = pquery.getJobList.asScala.toSeq,
+            jobId = pquery.getJobIdList.asScala.toSeq,
             from = if (pquery.hasFrom) Some(toModel(pquery.getFrom)) else None,
             to = if (pquery.hasUntil) Some(toModel(pquery.getUntil)) else None,
             partitions = pquery.getPartitionsMap.asScala.toMap
@@ -156,12 +156,12 @@ final class HistoryServiceHandler(
     }
     private def buildQuery(pquery: JobHistoryQuery): JobQuery = {
         JobQuery(
-            id = pquery.getIdList.asScala,
-            namespace = pquery.getNamespaceList.asScala,
-            project = pquery.getProjectList.asScala,
-            status = pquery.getStatusList.asScala.map(toModel),
-            phase = pquery.getPhaseList.asScala.map(toModel),
-            job = pquery.getJobList.asScala,
+            id = pquery.getIdList.asScala.toSeq,
+            namespace = pquery.getNamespaceList.asScala.toSeq,
+            project = pquery.getProjectList.asScala.toSeq,
+            status = pquery.getStatusList.asScala.toSeq.map(toModel),
+            phase = pquery.getPhaseList.asScala.toSeq.map(toModel),
+            job = pquery.getJobList.asScala.toSeq,
             from = if (pquery.hasFrom) Some(toModel(pquery.getFrom)) else None,
             to = if (pquery.hasUntil) Some(toModel(pquery.getUntil)) else None,
             args = pquery.getArgumentsMap.asScala.toMap

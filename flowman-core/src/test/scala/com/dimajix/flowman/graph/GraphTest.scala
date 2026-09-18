@@ -89,14 +89,14 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
         (sourceRelation.context _).expects().returns(context)
         (sourceRelation.name _).expects().atLeastOnce().returns("src")
         (sourceRelation.describe _).expects(*,*).atLeastOnce().returns(StructType(Seq.empty))
-        (sourceRelation.link _).expects(*).returns(Unit)
+        (sourceRelation.link _).expects(*).returns(())
 
         (targetRelationTemplate.instantiate _).expects(context,None).returns(targetRelation)
         (targetRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/tgt"))
         (targetRelation.context _).expects().returns(context)
         (targetRelation.name _).expects().atLeastOnce().returns("tgt")
         (targetRelation.describe _).expects(*,*).atLeastOnce().returns(StructType(Seq.empty))
-        (targetRelation.link _).expects(*).returns(Unit)
+        (targetRelation.link _).expects(*).returns(())
 
         (targetTemplate.instantiate _).expects(context,None).returns(target)
         (target.context _).expects().returns(context)

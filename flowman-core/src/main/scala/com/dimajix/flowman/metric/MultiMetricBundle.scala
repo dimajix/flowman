@@ -62,7 +62,7 @@ final case class MultiMetricBundle(override val name:String, override val labels
       *
       * @return
       */
-    override def metrics: Seq[Metric] = bundleMetrics.toSeq
+    override def metrics: Seq[Metric] = bundleMetrics.toSeq.toSeq
 
     /**
       * Resets and/or removes all metrics in this bundle.

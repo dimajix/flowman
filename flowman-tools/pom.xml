@@ -42,6 +42,8 @@
                             <fileSeparator>/</fileSeparator>
                             <pathSeparator>,</pathSeparator>
                             <prefix>lib</prefix>
+                            <!-- Netty is supplied by Spark and is not packaged in the Flowman distribution. -->
+                            <excludeGroupIds>io.netty</excludeGroupIds>
                             <!-- Manually exclude shaded artifacts -->
                             <excludeArtifactIds>json,org.everit.json.schema,velocity-engine-core,flowman-spark-dependencies</excludeArtifactIds>
                         </configuration>

@@ -1,6 +1,7 @@
 package com.dimajix.flowman.config
 
 import java.io.File
+import scala.reflect.ClassTag
 
 
 private object ConfigHelpers {
@@ -31,7 +32,7 @@ private object ConfigHelpers {
         }
     }
 
-    def stringToSeq[T](str: String, converter: String => T): Seq[T] = {
+    def stringToSeq[T: ClassTag](str: String, converter: String => T): Seq[T] = {
         str.split(",").map(_.trim()).filter(_.nonEmpty).map(converter)
     }
 
@@ -39,7 +40,7 @@ private object ConfigHelpers {
         v.map(stringConverter).mkString(",")
     }
 
-    def stringToClass[T](s: String, key:String, xface:Class[T]) : Class[_ <: T] = {
+    def stringToClass[T](s: String, key:String, xface:Class[T])(implicit ct:ClassTag[T]) : Class[_ <: T] = {
         try {
             val clazz = Class.forName(s, true, classLoader)
             clazz.asSubclass(xface)
@@ -92,12 +93,12 @@ class TypedConfigBuilder[T](
     }
 
     /** Turns the config entry into a sequence of values of the underlying type. */
-    def toSequence: TypedConfigBuilder[Seq[T]] = {
+    def toSequence(implicit ct:ClassTag[T]): TypedConfigBuilder[Seq[T]] = {
         new TypedConfigBuilder(parent, stringToSeq(_, converter), seqToString(_:Seq[T], stringConverter))
     }
 
     /** Creates a [[ConfigEntry]] that does not have a default value. */
-    def createOptional: OptionalConfigEntry[T] = {
+    def createOptional(implicit ct:ClassTag[T]): OptionalConfigEntry[T] = {
         val entry = new OptionalConfigEntry[T](parent.key,
             converter, stringConverter, parent._doc)
         parent._onCreate.foreach(_(entry))
@@ -151,7 +152,7 @@ case class ConfigBuilder(key: String) {
         new TypedConfigBuilder(this, v => new File(v))
     }
 
-    def classConf[T](xface:Class[T]): TypedConfigBuilder[Class[_ <: T]] = {
-        new TypedConfigBuilder(this, stringToClass(_, key, xface), classToString(_))
+    def classConf[T](xface:Class[T])(implicit ct:ClassTag[T]): TypedConfigBuilder[Class[_ <: T]] = {
+        new TypedConfigBuilder(this, stringToClass(_, key, xface)(ct), (clazz:Class[_ <: T]) => clazz.getCanonicalName)
     }
 }

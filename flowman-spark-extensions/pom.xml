@@ -37,7 +37,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/src/main/spark-${spark-api.version}</source>
+                                <source>${project.basedir}/src/main/spark-${spark-source.version}</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -49,7 +49,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/src/main/spark-${spark-api.version}</source>
+                                <source>${project.basedir}/src/main/spark-${spark-source.version}</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -57,8 +57,6 @@
             </plugin>
         </plugins>
     </build>
-
-
 
     <dependencies>
         <dependency>
@@ -81,5 +79,3 @@
         </dependency>
     </dependencies>
 </project>
-
-

@@ -80,7 +80,6 @@
                                     <directory>.</directory>
                                     <includes>
                                         <include>bin/*</include>
-                                        <include>conf/*</include>
                                         <include>libexec/*</include>
                                     </includes>
                                     <filtering>false</filtering>
@@ -90,6 +89,29 @@
                                     <includes>
                                         <include>Dockerfile</include>
                                         <include>docker-compose.yml</include>
+                                    </includes>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-config</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <delimiters>
+                                <delimiter>@</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                            <outputDirectory>${basedir}/target/build</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>.</directory>
+                                    <includes>
+                                        <include>conf/*</include>
                                     </includes>
                                     <filtering>true</filtering>
                                 </resource>

@@ -43,6 +43,8 @@
                             <fileSeparator>/</fileSeparator>
                             <pathSeparator>,</pathSeparator>
                             <prefix>lib</prefix>
+                            <!-- Netty is supplied by Spark and is not packaged in the Flowman distribution. -->
+                            <excludeGroupIds>io.netty</excludeGroupIds>
                             <!-- Manually exclude shaded artifacts -->
                             <excludeArtifactIds>flowman-kernel-api,flowman-kernel-common,grpc-netty,grpc-protobuf-lite,grpc-protobuf,grpc-context,grpc-stub,grpc-api,grpc-core,failureaccess,guava,protobuf-java,flowman-spark-dependencies</excludeArtifactIds>
                         </configuration>

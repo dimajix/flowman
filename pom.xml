@@ -3044,7 +3044,7 @@
             <dependency>
                 <groupId>org.jline</groupId>
                 <artifactId>jline-reader</artifactId>
-                <version>3.30.6</version>
+                <version>3.30.15</version>
             </dependency>
             <dependency>
                 <groupId>org.jline</groupId>

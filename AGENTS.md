@@ -16,7 +16,8 @@ resolves dependencies and executes them on Spark, including creating/migrating/d
 
 * **Scala 2.12** (2.11 for Spark 2.4 / Cloudera profiles) and **Java**, compiled by `scala-maven-plugin`
   (the plain `maven-compiler-plugin` is disabled)
-* **Apache Spark** 2.4 – 3.5 (default: 3.5), **Hadoop** 2.6 – 3.3 (default: 3.3), **Java 11** (Java 8 for Spark 2.4, EMR, Synapse)
+* **Apache Spark** 2.4 – 3.5 (default: 3.5), **Hadoop** 2.6 – 3.3 (default: 3.3),
+  **JDK 11 or 17** (bytecode target Java 11; Java 8 for Spark 2.4, EMR, Synapse)
 * **Jackson** for YAML deserialization, **Velocity** for templating/expressions
 * **ScalaTest** (`AnyFlatSpec` + `Matchers`) for tests, run via `scalatest-maven-plugin`
 * **gRPC/Protobuf** for the kernel API, **Jersey** for the server, **Vue 2 + Vuetify** for the server UI
@@ -66,7 +67,7 @@ mvn clean install -Pspark-3.4 -Phadoop-3.3 -DskipTests -Ddockerfile.skip -Dgpg.s
 ```
 
 Notes:
-* Requires JDK 11, Maven, npm (for `flowman-server-ui`), optionally Docker. The Scala compiler is configured with 4 GB heap.
+* Requires JDK 11 or 17, Maven, npm (for `flowman-server-ui`), optionally Docker. The Scala compiler is configured with 4 GB heap.
 * Available profiles: `spark-2.4` … `spark-3.5`, `hadoop-2.6` … `hadoop-3.3`, `CDH-6.3`, `CDP-7.1`, `CDP-7.1-spark-3.2`,
   `CDP-7.1-spark-3.3`, `EMR-6.12`, `synapse-3.3`. See `BUILDING.md`.
 * A full build with tests takes a long time. Prefer building/testing only the affected modules.

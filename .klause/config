@@ -1,0 +1,15 @@
+# klause project configuration for Flowman
+#
+# One KEY=VALUE per line, see "klause --klause-help". The image is built from
+# .klause/Dockerfile on top of the global IMAGE. Mounts, network and image only
+# apply to newly created containers ("klause --klause-rm").
+
+# Name of the project image
+IMAGE=klause-flowman:latest
+
+# The Maven repository is shared with the host via the global MOUNTS (~/.m2).
+# Without that, at least the repository should be mounted here:
+#MOUNTS="~/.m2/repository"
+
+# The test suites start Spark sessions with -Xmx4g per fork
+#CONTAINER_ARGS="--memory 12g"

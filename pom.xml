@@ -157,7 +157,7 @@
         <slf4j-api.version>2</slf4j-api.version>
         <snakeyaml.version>2.0</snakeyaml.version>
         <snakeyaml.scope>provided</snakeyaml.scope>
-        <snappy.version>1.1.10.5</snappy.version>
+        <snappy.version>1.1.10.9</snappy.version>
 
         <!-- Non-Spark library versions -->
         <pure.commons-lang3.version>3.20.0</pure.commons-lang3.version>
